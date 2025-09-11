@@ -63,9 +63,6 @@ const main = () => {
     const VertexBuffer = gl.createBuffer();
     const ColorBuffer = gl.createBuffer();
 
-    let vertices = [];
-    let colors = [];
-
     robot_head = new Float32Array([
         -0.5, -0.5,
          0.5, 0.5,
@@ -103,7 +100,56 @@ const main = () => {
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);    
 
+    robotLeftEye = new Float32Array([
+        -0.4, -0.0,
+        -0.1, 0.2,
+        -0.1, -0.0,
+        -0.4, -0.0,
+        -0.4, 0.2,
+        -0.1, 0.2,
+    ])
+
+    robotSecondaryColor = new Float32Array([
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+    ])
+
+    drawVertices(gl, robotLeftEye, positionLocation, VertexBuffer);
+    drawColors(gl, robotSecondaryColor, colorLocation, ColorBuffer);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);    
+
+    robotRightEye = new Float32Array([
+        0.1, 0.0,
+        0.4, 0.2,
+        0.4, 0.0,
+        0.1, 0.0,
+        0.1, 0.2,
+        0.4, 0.2,
+    ])
+
+    drawVertices(gl, robotRightEye, positionLocation, VertexBuffer);
+    drawColors(gl, robotSecondaryColor, colorLocation, ColorBuffer);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);   
     
+    robotLips = new Float32Array([
+        -0.4, -0.4,
+        0.4, -0.2,
+        0.4, -0.4,
+        -0.4, -0.4,
+        -0.4, -0.2,
+        0.4, -0.2
+    ])
+
+    drawVertices(gl, robotLips, positionLocation, VertexBuffer);
+    drawColors(gl, robotSecondaryColor, colorLocation, ColorBuffer);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);    
 
 }
 
