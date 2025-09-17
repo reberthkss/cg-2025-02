@@ -1,10 +1,11 @@
-function drawLineInteraction(){ 
-    const canvas = document.getElementById('glLines');
+function drawTriangle(){ 
+    const canvas = document.getElementById('glExercise2');
     const gl = canvas.getContext('webgl');
     const bodyElement = document.querySelector("body");
+    let drawMode = 'r'; // r to line, t to triangle
     let linePoints = [];
 
-    let p0 = null;
+    let trianglePoints = [];
 
     if (!gl) {
         console.error('WebGL not supported');
@@ -56,7 +57,6 @@ function drawLineInteraction(){
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // Function to convert pixel coordinates to clip space
     function toClipSpace(x, y) {
         return [
             (x / canvas.width) * 2 - 1,
@@ -64,21 +64,43 @@ function drawLineInteraction(){
         ];
     }
 
-    // Mouse click event
     canvas.addEventListener('click', (event) => {
         const rect = canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
 
-        if (p0 === null) {
-            p0 = [x, y];
-            return;
+        if (drawMode === 'r') {
+            if (trianglePoints.length === 0) {
+                trianglePoints.push([x, y]);
+                console.log('Primeiro ponto da linha:', [x, y]);
+                return;
+            } else {
+                trianglePoints.push([x, y]);
+                console.log('Segundo ponto da linha:', [x, y]);
+                
+                linePoints = bresenham(trianglePoints[0], trianglePoints[1]);
+                drawPoints();
+                
+                trianglePoints = [];
+            }
+        } else if (drawMode === 't') {
+            trianglePoints.push([x, y]);
+            console.log(`Ponto ${trianglePoints.length} do triângulo:`, [x, y]);
+            
+            if (trianglePoints.length === 3) {
+                linePoints = [];
+                linePoints = linePoints.concat(bresenham(trianglePoints[0], trianglePoints[1]));
+                linePoints = linePoints.concat(bresenham(trianglePoints[1], trianglePoints[2]));
+                linePoints = linePoints.concat(bresenham(trianglePoints[2], trianglePoints[0]));
+                
+                drawPoints();
+                
+                trianglePoints = [];
+            }
         }
+    });
 
-        p1 = [x, y];
-
-        linePoints = bresenham(p0, p1);
-
+    function drawPoints() {
         const clipSpaceLinePoints = [];
         for (const point of linePoints) {
             clipSpaceLinePoints.push(...toClipSpace(point[0], point[1]));
@@ -86,9 +108,7 @@ function drawLineInteraction(){
 
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(clipSpaceLinePoints), gl.STATIC_DRAW);
         gl.drawArrays(gl.POINTS, 0, linePoints.length);
-
-        p0 = null;
-    });
+    }
 
     // Keyboard event for changing the line color
     bodyElement.addEventListener('keydown', (event) => {
@@ -111,7 +131,21 @@ function drawLineInteraction(){
 
             gl.drawArrays(gl.POINTS, 0, linePoints.length);
         }
+
+        const key = event.key.toLowerCase();
+
+        if (key == 'r' || key == 't') {
+            drawMode = key;
+            console.log(`Draw mode changed to: ${drawMode === 'r' ? 'Line' : 'Triangle'}`);
+            
+            // Reset pontos quando mudar de modo
+            trianglePoints = [];
+            
+            // Limpar canvas
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+        }
     }, false);
 }
 
-window.addEventListener('load', drawLineInteraction);
+window.addEventListener('load', drawTriangle);
