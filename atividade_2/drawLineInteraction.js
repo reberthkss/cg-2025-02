@@ -1,6 +1,9 @@
 function drawLineInteraction(){ 
     const canvas = document.getElementById('glLines');
     const gl = canvas.getContext('webgl');
+    const bodyElement = document.querySelector("body");
+    let linePoints = [];
+
     let p0 = null;
 
     if (!gl) {
@@ -20,8 +23,9 @@ function drawLineInteraction(){
     // Fragment shader program
     const fragmentShaderSource = `
         precision mediump float;
+        uniform vec3 u_color;
         void main() {
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color
+            gl_FragColor = vec4(u_color, 1.0);
         }
     `;
 
@@ -35,6 +39,10 @@ function drawLineInteraction(){
 
     // Look up attribute location
     const positionLocation = gl.getAttribLocation(program, 'a_position');
+    const colorLocation = gl.getUniformLocation(program, 'u_color');
+
+    const initialColor = [0.0, 0.0, 1.0]; // Blue color
+    gl.uniform3fv(colorLocation, initialColor);
 
     // Create buffer
     const positionBuffer = gl.createBuffer();
@@ -44,7 +52,7 @@ function drawLineInteraction(){
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-    // Clear the canvas
+    // Clearing the canvas
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -69,20 +77,41 @@ function drawLineInteraction(){
 
         p1 = [x, y];
 
-        const linePoints = bresenham(p0, p1);
+        linePoints = bresenham(p0, p1);
 
         const clipSpaceLinePoints = [];
         for (const point of linePoints) {
             clipSpaceLinePoints.push(...toClipSpace(point[0], point[1]));
         }
 
-        console.log("Clip space => ", clipSpaceLinePoints)
-
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(clipSpaceLinePoints), gl.STATIC_DRAW);
         gl.drawArrays(gl.POINTS, 0, linePoints.length);
 
         p0 = null;
     });
+
+    // Keyboard event for changing the line color
+    bodyElement.addEventListener('keydown', (event) => {
+        const colorMap = {
+            '0': [1.0, 1.0, 1.0], // White
+            '1': [1.0, 0.0, 0.0], // Red
+            '2': [0.0, 1.0, 0.0], // Green
+            '3': [0.0, 0.0, 1.0], // Blue
+            '4': [1.0, 1.0, 0.0], // Yellow
+            '5': [1.0, 0.0, 1.0], // Magenta
+            '6': [0.0, 1.0, 1.0], // Cyan
+            '7': [1.0, 0.5, 0.0], // Orange
+            '8': [0.5, 0.0, 1.0], // Purple
+            '9': [0.5, 0.5, 0.5]  // Gray
+        }
+        
+        if (event.key in colorMap) {
+            const newColor = colorMap[event.key];
+            gl.uniform3fv(colorLocation, newColor);
+
+            gl.drawArrays(gl.POINTS, 0, linePoints.length);
+        }
+    }, false);
 }
 
 window.addEventListener('load', drawLineInteraction);
