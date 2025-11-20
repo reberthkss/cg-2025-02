@@ -101,8 +101,7 @@ function main() {
     let z_near = -1.0;
     let z_far = -20.0;
 
-    let projectionMatrix = m4.setOrthographicProjectionMatrix(xw_min, xw_max, yw_min, yw_max, z_near, z_far);
-    // let projectionMatrix = m4.setPerspectiveProjectionMatrix(xw_min, xw_max, yw_min, yw_max, z_near, z_far);
+    let projectionMatrix = m4.setPerspectiveProjectionMatrix(xw_min, xw_max, yw_min, yw_max, z_near, z_far);
 
     let theta = 0.0;
     let tx = 0.0;
