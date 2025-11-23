@@ -270,23 +270,25 @@ async function main() {
     let modelViewMatrix = [];
     let inverseTransposeModelViewMatrix = [];
 
-    let P0 = [0.0,0.0,40.0];
-    let Pref = [0.0,0.0,0.0];
-    let V = [0.0,1.0,0.0];
+    // Câmera estilo Pac-Man (vista de cima)
+    let P0 = [0.0, 30.0, 15.0];  // Câmera acima olhando para baixo
+    let Pref = [0.0, 0.0, 0.0];  // Olhando para o centro
+    let V = [0.0, 0.0, 1.0];    // Vetor up apontando para trás
     let viewingMatrix = m4.setViewingMatrix(P0,Pref,V);
 
     gl.uniformMatrix4fv(viewingMatrixUniformLocation,false,viewingMatrix);
     gl.uniform3fv(viewPositionUniformLocation, new Float32Array(P0));
-    gl.uniform3fv(lightPositionUniformLocation, new Float32Array([40.0,40.0,40.0]));
+    gl.uniform3fv(lightPositionUniformLocation, new Float32Array([0.0, 40.0, 0.0])); // Luz de cima
 
     let color = [1.0,0.0,0.0];
     gl.uniform3fv(colorUniformLocation, new Float32Array(color));
 
-    let xw_min = -20.0;
-    let xw_max = 20.0;
-    let yw_min = -20.0;
-    let yw_max = 20.0;
-    let z_near = -1.0;
+    // Projeção ortográfica para vista top-down estilo Pac-Man
+    let xw_min = -15.0;
+    let xw_max = 15.0;
+    let yw_min = -15.0;
+    let yw_max = 15.0;
+    let z_near = -10.0;
     let z_far = -100.0;
 
     let projectionMatrix = m4.setOrthographicProjectionMatrix(xw_min,xw_max,yw_min,yw_max,z_near,z_far);
@@ -294,6 +296,14 @@ async function main() {
     let rotateX = 0;
     let rotateY = 0;
     let rotateZ = 0;
+    let autoSwim = false; // Animação automática desativada por padrão
+    
+    // Posição do peixe
+    let fishX = 0.0;
+    let fishY = 0.0;
+    let fishZ = 0.0;
+    let fishRotationY = 0.0; // Rotação para direção do movimento
+    let moveSpeed = 0.2;
 
     const bodyElement = document.querySelector("body");
     bodyElement.addEventListener("keydown",keyDown,false);
@@ -307,20 +317,47 @@ async function main() {
         case '2':
           projectionMatrix = m4.setPerspectiveProjectionMatrix(xw_min,xw_max,yw_min,yw_max,z_near,z_far);
           break;
+        case 'w':
+          fishZ -= moveSpeed; // Move para frente (em direção ao topo da tela)
+          fishRotationY = 0; // Olha para frente
+          break;
+        case 's':
+          fishZ += moveSpeed; // Move para trás (em direção ao fundo da tela)
+          fishRotationY = Math.PI; // Olha para trás
+          break;
+        case 'a':
+          fishX -= moveSpeed; // Move para esquerda
+          fishRotationY = Math.PI / 2; // Olha para esquerda
+          break;
+        case 'd':
+          fishX += moveSpeed; // Move para direita
+          fishRotationY = -Math.PI / 2; // Olha para direita
+          break;
         case 'x':
           rotateX = 1;
           rotateY = 0;
           rotateZ = 0;
+          autoSwim = false;
           break;
         case 'y':
           rotateX = 0;
           rotateY = 1;
           rotateZ = 0;
+          autoSwim = false;
           break;
         case 'z':
           rotateX = 0;
           rotateY = 0;
           rotateZ = 1;
+          autoSwim = false;
+          break;
+        case 'q':
+          autoSwim = !autoSwim; // Toggle animação automática
+          if (!autoSwim) {
+            rotateX = 0;
+            rotateY = 0;
+            rotateZ = 0;
+          }
           break;
       }
     }
@@ -328,6 +365,7 @@ async function main() {
     let theta_x = 0.0;
     let theta_y = 0.0;
     let theta_z = 0.0;
+    let time = 0.0; // Tempo para animação
 
     const objData = await loadOBJFromFile('nemo_fish.obj');
     
@@ -431,9 +469,40 @@ async function main() {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, IndexBuffer);
       
       modelViewMatrix = m4.identity();
-      modelViewMatrix = m4.xRotate(modelViewMatrix,degToRad(theta_x));
-      modelViewMatrix = m4.yRotate(modelViewMatrix,degToRad(theta_y));
-      modelViewMatrix = m4.zRotate(modelViewMatrix,degToRad(theta_z));
+      
+      if (autoSwim) {
+        // Movimento circular (nado)
+        let radius = 5.0;
+        let swimX = Math.cos(time * 0.5) * radius;
+        let swimZ = Math.sin(time * 0.5) * radius;
+        
+        // Movimento vertical ondulatório
+        let swimY = Math.sin(time * 2.0) * 0.5;
+        
+        // Rotação para seguir a trajetória circular
+        let swimAngle = time * 0.5 + Math.PI / 2;
+        
+        // Balançar o corpo (simula movimento de nado)
+        let bodyWiggle = Math.sin(time * 4.0) * 5.0;
+        
+        modelViewMatrix = m4.translate(modelViewMatrix, swimX, swimY, swimZ);
+        modelViewMatrix = m4.yRotate(modelViewMatrix, swimAngle);
+        modelViewMatrix = m4.zRotate(modelViewMatrix, degToRad(bodyWiggle));
+      } else {
+        // Movimento controlado por WASD
+        modelViewMatrix = m4.translate(modelViewMatrix, fishX, fishY, fishZ);
+        modelViewMatrix = m4.yRotate(modelViewMatrix, fishRotationY);
+        modelViewMatrix = m4.xRotate(modelViewMatrix, Math.PI / 2); // Rotaciona para ficar na horizontal
+        
+        // Balançar sutil do corpo durante movimento
+        let bodyWiggle = Math.sin(time * 4.0) * 3.0;
+        modelViewMatrix = m4.zRotate(modelViewMatrix, degToRad(bodyWiggle));
+        
+        // Rotação manual (se ativada com x, y, z)
+        modelViewMatrix = m4.xRotate(modelViewMatrix, degToRad(theta_x));
+        modelViewMatrix = m4.yRotate(modelViewMatrix, degToRad(theta_y));
+        modelViewMatrix = m4.zRotate(modelViewMatrix, degToRad(theta_z));
+      }
 
       inverseTransposeModelViewMatrix = m4.transpose(m4.inverse(modelViewMatrix));
 
@@ -447,12 +516,16 @@ async function main() {
     function drawScene(){
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      if (rotateX)
-        theta_x += 1;
-      if (rotateY)
-        theta_y += 1;
-      if (rotateZ)
-        theta_z += 1;
+      time += 0.016; // Sempre incrementa o tempo para o balanço do corpo
+      
+      if (!autoSwim) {
+        if (rotateX)
+          theta_x += 1;
+        if (rotateY)
+          theta_y += 1;
+        if (rotateZ)
+          theta_z += 1;
+      }
 
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
       
