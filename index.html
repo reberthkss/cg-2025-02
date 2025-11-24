@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computação Gráfica - Projetos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .project-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-color: #667eea;
+        }
+
+        .project-card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .project-card p {
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .project-card a {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .project-card a:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .featured {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .featured h2,
+        .featured p {
+            color: white;
+        }
+
+        .featured a {
+            background: white;
+            color: #667eea;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Computação Gráfica</h1>
+        <p class="subtitle">Projetos e Atividades Desenvolvidas</p>
+
+        <div class="projects-grid">
+            <div class="project-card featured">
+                <h2>🐠 Projeto Final - Fish Man Game</h2>
+                <p>Jogo interativo em WebGL com importação de modelos 3D, projeções ortográfica e perspectiva, e controles de rotação.</p>
+                <a href="projeto_final_fish_man/index.html">Visualizar Projeto</a>
+            </div>
+
+            <div class="project-card">
+                <h2>📦 Atividade 10 - Importing OBJ</h2>
+                <p>Importação e renderização de arquivos .obj em WebGL.</p>
+                <a href="atividade_10_importing_obj/index.html">Acessar</a>
+            </div>
+
+            <div class="project-card">
+                <h2>🎬 Atividade 9 - Renderização</h2>
+                <p>Técnicas de renderização 3D com WebGL.</p>
+                <a href="atividade_9_renderization/index.html">Acessar</a>
+            </div>
+
+            <div class="project-card">
+                <h2>🌀 Atividade 8 - Supercônicas</h2>
+                <p>Geração e visualização de superfícies supercônicas.</p>
+                <a href="atividade_8_superconics/index.html">Acessar</a>
+            </div>
+
+            <div class="project-card">
+                <h2>💡 Atividade 7 - Iluminação</h2>
+                <p>Implementação de modelos de iluminação em 3D.</p>
+                <a href="atividade_7_lighthning/index.html">Acessar</a>
+            </div>
+
+            <div class="project-card">
+                <h2>👁️ Atividade 6 - Perspectiva</h2>
+                <p>Projeção em perspectiva com matrizes de transformação.</p>
+                <a href="atividade_6_perspective/index.html">Acessar</a>
+            </div>
+
+            <div class="project-card">
+                <h2>📐 Atividade 5 - Projeção Ortográfica</h2>
+                <p>Implementação de projeção ortográfica em WebGL.</p>
+                <a href="atividade_5_ortho/index.html">Acessar</a>
+            </div>
+
+            <div class="project-card">
+                <h2>🎮 Atividade 4 - Animação</h2>
+                <p>Animações 2D com transformações: carro, flor, robô e cata-vento.</p>
+                <a href="atividade_4_animation/index.html">Acessar</a>
+            </div>
+
+            <div class="project-card">
+                <h2>⭕ Atividade 3 - Bresenham Circunferência</h2>
+                <p>Algoritmo de Bresenham para desenho de circunferências.</p>
+                <a href="atividade_3_bresenham_circunferencia/index.html">Acessar</a>
+            </div>
+
+            <div class="project-card">
+                <h2>📏 Atividade 2 - Bresenham Line</h2>
+                <p>Algoritmo de Bresenham para rasterização de linhas.</p>
+                <a href="atividade_2/index.html">Acessar</a>
+            </div>
+
+            <div class="project-card">
+                <h2>🎨 Atividade 1 - Primitivas WebGL</h2>
+                <p>Primitivas básicas do WebGL: pontos, linhas e triângulos.</p>
+                <a href="atv1/index.html">Acessar</a>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>Disciplina:</strong> Computação Gráfica</p>
+            <p><strong>Repositório:</strong> <a href="https://github.com/reberthkss/cg-2025-02" target="_blank" style="color: #667eea;">github.com/reberthkss/cg-2025-02</a></p>
+        </footer>
+    </div>
+</body>
+</html>
