@@ -303,6 +303,7 @@ async function main() {
     let fishY = 0.0;
     let fishZ = 0.0;
     let fishRotationY = 0.0; // Rotação para direção do movimento
+    let fishRotationX = Math.PI / 2;
     let moveSpeed = 0.2;
 
     const bodyElement = document.querySelector("body");
@@ -319,46 +320,21 @@ async function main() {
           break;
         case 'w':
           fishZ -= moveSpeed; // Move para frente (em direção ao topo da tela)
-          fishRotationY = 0; // Olha para frente
+          fishRotationX += 0.01; // Olha para frente
           break;
         case 's':
           fishZ += moveSpeed; // Move para trás (em direção ao fundo da tela)
-          fishRotationY = Math.PI; // Olha para trás
+          fishRotationX -= 0.01; // Olha para trás
           break;
         case 'a':
           fishX -= moveSpeed; // Move para esquerda
-          fishRotationY = Math.PI / 2; // Olha para esquerda
+          fishRotationY += 0.05; // Olha para esquerda
           break;
         case 'd':
           fishX += moveSpeed; // Move para direita
-          fishRotationY = -Math.PI / 2; // Olha para direita
+          fishRotationY -= 0.05; // Olha para direita
           break;
-        case 'x':
-          rotateX = 1;
-          rotateY = 0;
-          rotateZ = 0;
-          autoSwim = false;
-          break;
-        case 'y':
-          rotateX = 0;
-          rotateY = 1;
-          rotateZ = 0;
-          autoSwim = false;
-          break;
-        case 'z':
-          rotateX = 0;
-          rotateY = 0;
-          rotateZ = 1;
-          autoSwim = false;
-          break;
-        case 'q':
-          autoSwim = !autoSwim; // Toggle animação automática
-          if (!autoSwim) {
-            rotateX = 0;
-            rotateY = 0;
-            rotateZ = 0;
-          }
-          break;
+        
       }
     }
 
@@ -492,7 +468,7 @@ async function main() {
         // Movimento controlado por WASD
         modelViewMatrix = m4.translate(modelViewMatrix, fishX, fishY, fishZ);
         modelViewMatrix = m4.yRotate(modelViewMatrix, fishRotationY);
-        modelViewMatrix = m4.xRotate(modelViewMatrix, Math.PI / 2); // Rotaciona para ficar na horizontal
+        modelViewMatrix = m4.xRotate(modelViewMatrix, fishRotationX);
         
         // Balançar sutil do corpo durante movimento
         let bodyWiggle = Math.sin(time * 4.0) * 3.0;
