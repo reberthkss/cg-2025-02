@@ -31,6 +31,7 @@ function drawCoordinateAxes(VertexBuffer, ColorBuffer, coordinateAxes, coordinat
       gl.bindBuffer(gl.ARRAY_BUFFER, VertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, coordinateAxes, gl.STATIC_DRAW);
       gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
       gl.enableVertexAttribArray(colorLocation);
       gl.bindBuffer(gl.ARRAY_BUFFER, ColorBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, coordinateAxesColors, gl.STATIC_DRAW);

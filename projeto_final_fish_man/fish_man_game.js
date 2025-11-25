@@ -1,3 +1,17 @@
+function defineCoordinateAxes() {
+  return new Float32Array([
+    // X axis
+    -100.0, 0.0, 0.0,
+    100.0, 0.0, 0.0,
+    // Y axis
+    0.0, -100.0, 0.0,
+    0.0, 100.0, 0.0,
+    // Z axis
+    0.0, 0.0, -100.0,
+    0.0, 0.0, 100.0,
+  ]);
+}
+
 // Vertex shader source code
 const vertexShaderSource = `
     attribute vec3 a_position;
@@ -67,32 +81,32 @@ const fragmentShaderSource = `
 `;
 
 function createShader(gl, type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
 
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error('Error compiling shader:', gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-        return null;
-    }
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error('Error compiling shader:', gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+    return null;
+  }
 
-    return shader;
+  return shader;
 }
 
 function createProgram(gl, vertexShader, fragmentShader) {
-    const program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
+  const program = gl.createProgram();
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
 
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Error linking program:', gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
-        return null;
-    }
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.error('Error linking program:', gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
+    return null;
+  }
 
-    return program;
+  return program;
 }
 
 async function loadOBJFromFile(filePath) {
@@ -173,7 +187,7 @@ function parseOBJ(text) {
   const tempVertices = [];
   const tempNormals = [];
   const tempTexcoords = [];
-  
+
   let mtlFile = null;
 
   const lines = text.split('\n');
@@ -222,313 +236,370 @@ function parseOBJ(text) {
 }
 
 async function main() {
-    const canvas = document.getElementById('glCanvas');
-    const gl = canvas.getContext('webgl');
+  const canvas = document.getElementById('glCanvas');
+  const gl = canvas.getContext('webgl');
 
-    if (!gl) {
-        console.error('WebGL not supported');
-        return;
+  if (!gl) {
+    console.error('WebGL not supported');
+    return;
+  }
+
+  // Enable extension for 32-bit indices
+  const ext = gl.getExtension('OES_element_index_uint');
+  if (!ext) {
+    console.error('OES_element_index_uint not supported');
+  }
+
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+  const program = createProgram(gl, vertexShader, fragmentShader);
+  gl.useProgram(program);
+
+  const positionLocation = gl.getAttribLocation(program, 'a_position');
+  const normalLocation = gl.getAttribLocation(program, 'a_normal');
+  const texcoordLocation = gl.getAttribLocation(program, 'a_texcoord');
+
+  const VertexBuffer = gl.createBuffer();
+  const NormalBuffer = gl.createBuffer();
+  const ColorBuffer = gl.createBuffer();
+  const TexcoordBuffer = gl.createBuffer();
+  const IndexBuffer = gl.createBuffer();
+
+  // Buffers separados para os eixos coordenados
+  const CoordVertexBuffer = gl.createBuffer();
+  const CoordNormalBuffer = gl.createBuffer();
+
+  const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
+  const textureUniformLocation = gl.getUniformLocation(program, 'u_texture');
+  const useTextureUniformLocation = gl.getUniformLocation(program, 'u_useTexture');
+
+  const modelViewMatrixUniformLocation = gl.getUniformLocation(program, 'u_modelMatrix');
+  const viewingMatrixUniformLocation = gl.getUniformLocation(program, 'u_viewingMatrix');
+  const projectionMatrixUniformLocation = gl.getUniformLocation(program, 'u_projectionMatrix');
+  const inverseTransposeModelViewMatrixUniformLocation = gl.getUniformLocation(program, `u_inverseTransposeModelMatrix`);
+
+  const lightPositionUniformLocation = gl.getUniformLocation(program, 'u_lightPosition');
+  const viewPositionUniformLocation = gl.getUniformLocation(program, 'u_viewPosition');
+
+  gl.enable(gl.DEPTH_TEST);
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  let modelViewMatrix = [];
+  let inverseTransposeModelViewMatrix = [];
+
+  // Câmera estilo Pac-Man (vista de cima)
+  let P0 = [0.0, 30.0, 15.0];  // Câmera acima olhando para baixo
+  let Pref = [0.0, 0.0, 0.0];  // Olhando para o centro
+  let V = [0.0, 0.0, 1.0];    // Vetor up apontando para trás
+  let viewingMatrix = m4.setViewingMatrix(P0, Pref, V);
+
+  gl.uniformMatrix4fv(viewingMatrixUniformLocation, false, viewingMatrix);
+  gl.uniform3fv(viewPositionUniformLocation, new Float32Array(P0));
+  gl.uniform3fv(lightPositionUniformLocation, new Float32Array([0.0, 40.0, 0.0])); // Luz de cima
+
+  let color = [1.0, 0.0, 0.0];
+  gl.uniform3fv(colorUniformLocation, new Float32Array(color));
+
+  // Projeção ortográfica para vista top-down estilo Pac-Man
+  let xw_min = -15.0;
+  let xw_max = 15.0;
+  let yw_min = -15.0;
+  let yw_max = 15.0;
+  let z_near = -10.0;
+  let z_far = -100.0;
+
+  let projectionMatrix = m4.setOrthographicProjectionMatrix(xw_min, xw_max, yw_min, yw_max, z_near, z_far);
+
+  let rotateX = 0;
+  let rotateY = 0;
+  let rotateZ = 0;
+  let autoSwim = false; // Animação automática desativada por padrão
+
+  // Posição do peixe
+  let fishX = 0.0;
+  let fishY = 0.0;
+  let fishZ = 0.0;
+  let fishRotationY = 0.0; // Rotação para direção do movimento
+  let fishRotationX = Math.PI / 2;
+  let moveSpeed = 0.2;
+
+  const bodyElement = document.querySelector("body");
+  bodyElement.addEventListener("keydown", keyDown, false);
+
+  function keyDown(event) {
+    event.preventDefault();
+    switch (event.key) {
+      case '1':
+        projectionMatrix = m4.setOrthographicProjectionMatrix(xw_min, xw_max, yw_min, yw_max, z_near, z_far);
+        break;
+      case '2':
+        projectionMatrix = m4.setPerspectiveProjectionMatrix(xw_min, xw_max, yw_min, yw_max, z_near, z_far);
+        break;
+      case 'w':
+        fishZ -= moveSpeed; // Move para frente (em direção ao topo da tela)
+        fishRotationX += 0.01; // Olha para frente
+        break;
+      case 's':
+        fishZ += moveSpeed; // Move para trás (em direção ao fundo da tela)
+        fishRotationX -= 0.01; // Olha para trás
+        break;
+      case 'a':
+        fishX -= moveSpeed; // Move para esquerda
+        fishRotationY += 0.05; // Olha para esquerda
+        break;
+      case 'd':
+        fishX += moveSpeed; // Move para direita
+        fishRotationY -= 0.05; // Olha para direita
+        break;
+
+    }
+  }
+
+  let theta_x = 0.0;
+  let theta_y = 0.0;
+  let theta_z = 0.0;
+  let time = 0.0; // Tempo para animação
+
+  const objData = await loadOBJFromFile('nemo_fish.obj');
+
+  if (!objData) {
+    console.error('Failed to load OBJ file');
+    return;
+  }
+
+  console.log('OBJ loaded successfully');
+  console.log('Positions:', objData.positions.length);
+  console.log('Normals:', objData.normals.length);
+  console.log('Texcoords:', objData.texcoords.length);
+  console.log('Indices:', objData.indices.length);
+
+  // Load MTL file if specified
+  let materials = null;
+  if (objData.mtlFile) {
+    materials = await loadMTLFromFile(objData.mtlFile);
+    console.log('MTL loaded:', materials);
+  }
+
+  let objVertices = new Float32Array(objData.positions);
+  let objNormals = new Float32Array(objData.normals);
+  let objTexcoords = new Float32Array(objData.texcoords);
+  let objIndices = new Uint32Array(objData.indices)
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, VertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, objVertices, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, NormalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, objNormals, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, TexcoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, objTexcoords, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, IndexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, objIndices, gl.STATIC_DRAW);
+
+  // Load texture from MTL
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  // Fill with a placeholder color while loading
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+
+  let textureLoaded = false;
+  if (materials) {
+    const firstMaterial = Object.values(materials)[0];
+    if (firstMaterial && firstMaterial.textureMap) {
+      const image = new Image();
+      image.onload = function () {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // Flip Y axis
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+        // Check if texture is power of 2
+        const isPowerOf2 = (value) => (value & (value - 1)) === 0;
+        if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+          gl.generateMipmap(gl.TEXTURE_2D);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        } else {
+          // NPOT texture - no mipmaps
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        }
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        textureLoaded = true;
+        gl.uniform1i(useTextureUniformLocation, 1); // Enable texture
+        console.log('Texture loaded successfully:', firstMaterial.textureMap, `(${image.width}x${image.height})`);
+      };
+      image.onerror = function () {
+        console.warn('Failed to load texture:', firstMaterial.textureMap);
+        gl.uniform1i(useTextureUniformLocation, 0); // Disable texture
+      };
+      image.src = firstMaterial.textureMap;
     }
 
-    // Enable extension for 32-bit indices
-    const ext = gl.getExtension('OES_element_index_uint');
-    if (!ext) {
-        console.error('OES_element_index_uint not supported');
+    // Use material color if no texture
+    if (firstMaterial && firstMaterial.diffuse) {
+      gl.uniform3fv(colorUniformLocation, new Float32Array(firstMaterial.diffuse));
+      console.log('Using material diffuse color:', firstMaterial.diffuse);
+    }
+  }
+
+  // Set texture uniform
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.uniform1i(textureUniformLocation, 0);
+  gl.uniform1i(useTextureUniformLocation, 0); // Start with texture disabled until loaded
+
+  function drawObj() {
+    gl.enableVertexAttribArray(positionLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, VertexBuffer);
+    gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+    gl.enableVertexAttribArray(normalLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, NormalBuffer);
+    gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
+
+    gl.enableVertexAttribArray(texcoordLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, TexcoordBuffer);
+    gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, IndexBuffer);
+
+    modelViewMatrix = m4.identity();
+
+    if (autoSwim) {
+      // Movimento circular (nado)
+      let radius = 5.0;
+      let swimX = Math.cos(time * 0.5) * radius;
+      let swimZ = Math.sin(time * 0.5) * radius;
+
+      // Movimento vertical ondulatório
+      let swimY = Math.sin(time * 2.0) * 0.5;
+
+      // Rotação para seguir a trajetória circular
+      let swimAngle = time * 0.5 + Math.PI / 2;
+
+      // Balançar o corpo (simula movimento de nado)
+      let bodyWiggle = Math.sin(time * 4.0) * 5.0;
+
+      modelViewMatrix = m4.translate(modelViewMatrix, swimX, swimY, swimZ);
+      modelViewMatrix = m4.yRotate(modelViewMatrix, swimAngle);
+      modelViewMatrix = m4.zRotate(modelViewMatrix, degToRad(bodyWiggle));
+    } else {
+      // Movimento controlado por WASD
+      modelViewMatrix = m4.translate(modelViewMatrix, fishX, fishY, fishZ);
+      modelViewMatrix = m4.yRotate(modelViewMatrix, fishRotationY);
+      modelViewMatrix = m4.xRotate(modelViewMatrix, fishRotationX);
+
+      // Balançar sutil do corpo durante movimento
+      let bodyWiggle = Math.sin(time * 4.0) * 3.0;
+      modelViewMatrix = m4.zRotate(modelViewMatrix, degToRad(bodyWiggle));
+
+      // Rotação manual (se ativada com x, y, z)
+      modelViewMatrix = m4.xRotate(modelViewMatrix, degToRad(theta_x));
+      modelViewMatrix = m4.yRotate(modelViewMatrix, degToRad(theta_y));
+      modelViewMatrix = m4.zRotate(modelViewMatrix, degToRad(theta_z));
     }
 
-    const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    inverseTransposeModelViewMatrix = m4.transpose(m4.inverse(modelViewMatrix));
 
-    const program = createProgram(gl, vertexShader, fragmentShader);
-    gl.useProgram(program);
+    gl.uniformMatrix4fv(modelViewMatrixUniformLocation, false, modelViewMatrix);
+    gl.uniformMatrix4fv(inverseTransposeModelViewMatrixUniformLocation, false, inverseTransposeModelViewMatrix);
+    gl.uniformMatrix4fv(projectionMatrixUniformLocation, false, projectionMatrix);
 
-    const positionLocation = gl.getAttribLocation(program, 'a_position');
-    const normalLocation = gl.getAttribLocation(program, 'a_normal');
-    const texcoordLocation = gl.getAttribLocation(program, 'a_texcoord');
+    gl.drawElements(gl.TRIANGLES, objIndices.length, gl.UNSIGNED_INT, 0);
+    
+  }
 
-    const VertexBuffer = gl.createBuffer();
-    const NormalBuffer = gl.createBuffer();
-    const TexcoordBuffer = gl.createBuffer();
-    const IndexBuffer = gl.createBuffer();
+  let coordinateAxes = defineCoordinateAxes();
+  
+  // Normais simples para os eixos (apontando para cima)
+  let coordinateNormals = new Float32Array([
+    0.0, 1.0, 0.0,
+    0.0, 1.0, 0.0,
+    0.0, 1.0, 0.0,
+    0.0, 1.0, 0.0,
+    0.0, 1.0, 0.0,
+    0.0, 1.0, 0.0,
+  ]);
 
-    const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
-    const textureUniformLocation = gl.getUniformLocation(program, 'u_texture');
-    const useTextureUniformLocation = gl.getUniformLocation(program, 'u_useTexture');
+  function drawCoordinates() {
+    gl.uniform1i(useTextureUniformLocation, 0);
 
-    const modelViewMatrixUniformLocation = gl.getUniformLocation(program,'u_modelMatrix');
-    const viewingMatrixUniformLocation = gl.getUniformLocation(program,'u_viewingMatrix');
-    const projectionMatrixUniformLocation = gl.getUniformLocation(program,'u_projectionMatrix');
-    const inverseTransposeModelViewMatrixUniformLocation = gl.getUniformLocation(program, `u_inverseTransposeModelMatrix`);
+    gl.enableVertexAttribArray(positionLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, CoordVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coordinateAxes, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
 
-    const lightPositionUniformLocation = gl.getUniformLocation(program,'u_lightPosition');
-    const viewPositionUniformLocation = gl.getUniformLocation(program,'u_viewPosition');
+    // Fornecer normais para os eixos
+    gl.enableVertexAttribArray(normalLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, CoordNormalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coordinateNormals, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
 
-    gl.enable(gl.DEPTH_TEST);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    // Desabilitar atributo de texcoord (não usado para eixos)
+    gl.disableVertexAttribArray(texcoordLocation);
+
+    modelViewMatrix = m4.identity();
+    inverseTransposeModelViewMatrix = m4.transpose(m4.inverse(modelViewMatrix));
+
+    gl.uniformMatrix4fv(modelViewMatrixUniformLocation, false, modelViewMatrix);
+    gl.uniformMatrix4fv(inverseTransposeModelViewMatrixUniformLocation, false, inverseTransposeModelViewMatrix);
+    gl.uniformMatrix4fv(projectionMatrixUniformLocation, false, projectionMatrix);
+
+    // Desenhar eixo X em vermelho
+    gl.uniform3fv(colorUniformLocation, new Float32Array([1.0, 0.0, 0.0]));
+    gl.drawArrays(gl.LINES, 0, 2);
+    
+    // Desenhar eixo Y em verde
+    gl.uniform3fv(colorUniformLocation, new Float32Array([0.0, 1.0, 0.0]));
+    gl.drawArrays(gl.LINES, 2, 2);
+    
+    // Desenhar eixo Z em azul
+    gl.uniform3fv(colorUniformLocation, new Float32Array([0.0, 0.0, 1.0]));
+    gl.drawArrays(gl.LINES, 4, 2);
+  }
+
+  function drawScene() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    let modelViewMatrix = [];
-    let inverseTransposeModelViewMatrix = [];
+    time += 0.016; // Sempre incrementa o tempo para o balanço do corpo
 
-    // Câmera estilo Pac-Man (vista de cima)
-    let P0 = [0.0, 30.0, 15.0];  // Câmera acima olhando para baixo
-    let Pref = [0.0, 0.0, 0.0];  // Olhando para o centro
-    let V = [0.0, 0.0, 1.0];    // Vetor up apontando para trás
-    let viewingMatrix = m4.setViewingMatrix(P0,Pref,V);
-
-    gl.uniformMatrix4fv(viewingMatrixUniformLocation,false,viewingMatrix);
-    gl.uniform3fv(viewPositionUniformLocation, new Float32Array(P0));
-    gl.uniform3fv(lightPositionUniformLocation, new Float32Array([0.0, 40.0, 0.0])); // Luz de cima
-
-    let color = [1.0,0.0,0.0];
-    gl.uniform3fv(colorUniformLocation, new Float32Array(color));
-
-    // Projeção ortográfica para vista top-down estilo Pac-Man
-    let xw_min = -15.0;
-    let xw_max = 15.0;
-    let yw_min = -15.0;
-    let yw_max = 15.0;
-    let z_near = -10.0;
-    let z_far = -100.0;
-
-    let projectionMatrix = m4.setOrthographicProjectionMatrix(xw_min,xw_max,yw_min,yw_max,z_near,z_far);
-
-    let rotateX = 0;
-    let rotateY = 0;
-    let rotateZ = 0;
-    let autoSwim = false; // Animação automática desativada por padrão
-    
-    // Posição do peixe
-    let fishX = 0.0;
-    let fishY = 0.0;
-    let fishZ = 0.0;
-    let fishRotationY = 0.0; // Rotação para direção do movimento
-    let fishRotationX = Math.PI / 2;
-    let moveSpeed = 0.2;
-
-    const bodyElement = document.querySelector("body");
-    bodyElement.addEventListener("keydown",keyDown,false);
-
-    function keyDown(event){
-      event.preventDefault();
-      switch(event.key){
-        case '1':
-          projectionMatrix = m4.setOrthographicProjectionMatrix(xw_min,xw_max,yw_min,yw_max,z_near,z_far);
-          break;
-        case '2':
-          projectionMatrix = m4.setPerspectiveProjectionMatrix(xw_min,xw_max,yw_min,yw_max,z_near,z_far);
-          break;
-        case 'w':
-          fishZ -= moveSpeed; // Move para frente (em direção ao topo da tela)
-          fishRotationX += 0.01; // Olha para frente
-          break;
-        case 's':
-          fishZ += moveSpeed; // Move para trás (em direção ao fundo da tela)
-          fishRotationX -= 0.01; // Olha para trás
-          break;
-        case 'a':
-          fishX -= moveSpeed; // Move para esquerda
-          fishRotationY += 0.05; // Olha para esquerda
-          break;
-        case 'd':
-          fishX += moveSpeed; // Move para direita
-          fishRotationY -= 0.05; // Olha para direita
-          break;
-        
-      }
+    if (!autoSwim) {
+      if (rotateX)
+        theta_x += 1;
+      if (rotateY)
+        theta_y += 1;
+      if (rotateZ)
+        theta_z += 1;
     }
 
-    let theta_x = 0.0;
-    let theta_y = 0.0;
-    let theta_z = 0.0;
-    let time = 0.0; // Tempo para animação
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    const objData = await loadOBJFromFile('nemo_fish.obj');
-    
-    if (!objData) {
-      console.error('Failed to load OBJ file');
-      return;
-    }
+    drawObj();
 
-    console.log('OBJ loaded successfully');
-    console.log('Positions:', objData.positions.length);
-    console.log('Normals:', objData.normals.length);
-    console.log('Texcoords:', objData.texcoords.length);
-    console.log('Indices:', objData.indices.length);
+    drawCoordinates();
 
-    // Load MTL file if specified
-    let materials = null;
-    if (objData.mtlFile) {
-      materials = await loadMTLFromFile(objData.mtlFile);
-      console.log('MTL loaded:', materials);
-    }
+    requestAnimationFrame(drawScene);
+  }
 
-    let objVertices = new Float32Array(objData.positions);
-    let objNormals = new Float32Array(objData.normals);
-    let objTexcoords = new Float32Array(objData.texcoords);
-    let objIndices = new Uint32Array(objData.indices)
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, VertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, objVertices, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, NormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, objNormals, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, TexcoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, objTexcoords, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, IndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, objIndices, gl.STATIC_DRAW);
-
-    // Load texture from MTL
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    // Fill with a placeholder color while loading
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
-    
-    let textureLoaded = false;
-    if (materials) {
-      const firstMaterial = Object.values(materials)[0];
-      if (firstMaterial && firstMaterial.textureMap) {
-        const image = new Image();
-        image.onload = function() {
-          gl.bindTexture(gl.TEXTURE_2D, texture);
-          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // Flip Y axis
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-          
-          // Check if texture is power of 2
-          const isPowerOf2 = (value) => (value & (value - 1)) === 0;
-          if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-            gl.generateMipmap(gl.TEXTURE_2D);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-          } else {
-            // NPOT texture - no mipmaps
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-          }
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-          textureLoaded = true;
-          gl.uniform1i(useTextureUniformLocation, 1); // Enable texture
-          console.log('Texture loaded successfully:', firstMaterial.textureMap, `(${image.width}x${image.height})`);
-        };
-        image.onerror = function() {
-          console.warn('Failed to load texture:', firstMaterial.textureMap);
-          gl.uniform1i(useTextureUniformLocation, 0); // Disable texture
-        };
-        image.src = firstMaterial.textureMap;
-      }
-      
-      // Use material color if no texture
-      if (firstMaterial && firstMaterial.diffuse) {
-        gl.uniform3fv(colorUniformLocation, new Float32Array(firstMaterial.diffuse));
-        console.log('Using material diffuse color:', firstMaterial.diffuse);
-      }
-    }
-    
-    // Set texture uniform
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(textureUniformLocation, 0);
-    gl.uniform1i(useTextureUniformLocation, 0); // Start with texture disabled until loaded
-
-    function drawObj(){
-      gl.enableVertexAttribArray(positionLocation);
-      gl.bindBuffer(gl.ARRAY_BUFFER, VertexBuffer);
-      gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
-
-      gl.enableVertexAttribArray(normalLocation);
-      gl.bindBuffer(gl.ARRAY_BUFFER, NormalBuffer);
-      gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
-
-      gl.enableVertexAttribArray(texcoordLocation);
-      gl.bindBuffer(gl.ARRAY_BUFFER, TexcoordBuffer);
-      gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, IndexBuffer);
-      
-      modelViewMatrix = m4.identity();
-      
-      if (autoSwim) {
-        // Movimento circular (nado)
-        let radius = 5.0;
-        let swimX = Math.cos(time * 0.5) * radius;
-        let swimZ = Math.sin(time * 0.5) * radius;
-        
-        // Movimento vertical ondulatório
-        let swimY = Math.sin(time * 2.0) * 0.5;
-        
-        // Rotação para seguir a trajetória circular
-        let swimAngle = time * 0.5 + Math.PI / 2;
-        
-        // Balançar o corpo (simula movimento de nado)
-        let bodyWiggle = Math.sin(time * 4.0) * 5.0;
-        
-        modelViewMatrix = m4.translate(modelViewMatrix, swimX, swimY, swimZ);
-        modelViewMatrix = m4.yRotate(modelViewMatrix, swimAngle);
-        modelViewMatrix = m4.zRotate(modelViewMatrix, degToRad(bodyWiggle));
-      } else {
-        // Movimento controlado por WASD
-        modelViewMatrix = m4.translate(modelViewMatrix, fishX, fishY, fishZ);
-        modelViewMatrix = m4.yRotate(modelViewMatrix, fishRotationY);
-        modelViewMatrix = m4.xRotate(modelViewMatrix, fishRotationX);
-        
-        // Balançar sutil do corpo durante movimento
-        let bodyWiggle = Math.sin(time * 4.0) * 3.0;
-        modelViewMatrix = m4.zRotate(modelViewMatrix, degToRad(bodyWiggle));
-        
-        // Rotação manual (se ativada com x, y, z)
-        modelViewMatrix = m4.xRotate(modelViewMatrix, degToRad(theta_x));
-        modelViewMatrix = m4.yRotate(modelViewMatrix, degToRad(theta_y));
-        modelViewMatrix = m4.zRotate(modelViewMatrix, degToRad(theta_z));
-      }
-
-      inverseTransposeModelViewMatrix = m4.transpose(m4.inverse(modelViewMatrix));
-
-      gl.uniformMatrix4fv(modelViewMatrixUniformLocation,false,modelViewMatrix);
-      gl.uniformMatrix4fv(inverseTransposeModelViewMatrixUniformLocation,false,inverseTransposeModelViewMatrix);
-      gl.uniformMatrix4fv(projectionMatrixUniformLocation,false,projectionMatrix);
-
-      gl.drawElements(gl.TRIANGLES, objIndices.length, gl.UNSIGNED_INT, 0);
-    }
-
-    function drawScene(){
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      time += 0.016; // Sempre incrementa o tempo para o balanço do corpo
-      
-      if (!autoSwim) {
-        if (rotateX)
-          theta_x += 1;
-        if (rotateY)
-          theta_y += 1;
-        if (rotateZ)
-          theta_z += 1;
-      }
-
-      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-      
-      drawObj();
-
-      requestAnimationFrame(drawScene);
-    }
-
-    drawScene();
+  drawScene();
 }
 
 function crossProduct(v1, v2) {
   let result = [
-      v1[1] * v2[2] - v1[2] * v2[1],
-      v1[2] * v2[0] - v1[0] * v2[2],
-      v1[0] * v2[1] - v1[1] * v2[0]
+    v1[1] * v2[2] - v1[2] * v2[1],
+    v1[2] * v2[0] - v1[0] * v2[2],
+    v1[0] * v2[1] - v1[1] * v2[0]
   ];
   return result;
 }
 
-function unitVector(v){ 
-    let vModulus = vectorModulus(v);
-    return v.map(function(x) { return x/vModulus; });
+function unitVector(v) {
+  let vModulus = vectorModulus(v);
+  return v.map(function (x) { return x / vModulus; });
 }
 
-function vectorModulus(v){
-    return Math.sqrt(Math.pow(v[0],2)+Math.pow(v[1],2)+Math.pow(v[2],2));
+function vectorModulus(v) {
+  return Math.sqrt(Math.pow(v[0], 2) + Math.pow(v[1], 2) + Math.pow(v[2], 2));
 }
 
 function radToDeg(r) {
