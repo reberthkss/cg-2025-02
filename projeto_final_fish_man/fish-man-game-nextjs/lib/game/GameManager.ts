@@ -209,19 +209,18 @@ export class GameManager {
 
   private update(deltaTime: number): void {
     // Handle continuous input
-    let moveSpeed = 0;
     if (this.inputManager.isKeyPressed(Key.W)) {
-      moveSpeed = this.fish.getMoveSpeed();
+      this.fish.moveZ(-1);
     }
     if (this.inputManager.isKeyPressed(Key.S)) {
-      moveSpeed = -this.fish.getMoveSpeed();
+      this.fish.moveZ(1);
     }
 
     if (this.inputManager.isKeyPressed(Key.A)) {
-      this.fish.turnLeft();
+      this.fish.moveX(-1);
     }
     if (this.inputManager.isKeyPressed(Key.D)) {
-      this.fish.turnRight();
+      this.fish.moveX(1);
     }
 
     const fishPosition = this.fish.getPosition();

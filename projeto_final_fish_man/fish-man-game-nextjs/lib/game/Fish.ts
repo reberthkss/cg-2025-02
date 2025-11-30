@@ -7,7 +7,7 @@ export class Fish extends GameObject {
   private mesh: Mesh | null = null;
   private texture: WebGLTexture | null = null;
   private shader: ShaderProgram;
-  private moveSpeed: number = 10;
+  private moveSpeed: number = 0.1;
   private time: number = 0;
   private bodyWiggleAmplitude: number = 3.0;
 
@@ -29,24 +29,12 @@ export class Fish extends GameObject {
     this.texture = texture;
   }
 
-  moveForward(): void {
-    const angle = this.transform.rotation.y;
-    this.transform.position.x += this.moveSpeed * Math.sin(angle);
-    this.transform.position.z += this.moveSpeed * Math.cos(angle);
+  moveX(direction: number): void {
+    this.transform.position.x += direction * this.moveSpeed;
   }
 
-  moveBackward(): void {
-    const angle = this.transform.rotation.y;
-    this.transform.position.x -= this.moveSpeed * Math.sin(angle);
-    this.transform.position.z -= this.moveSpeed * Math.cos(angle);
-  }
-
-  turnLeft(): void {
-    this.transform.rotation.y += 0.05;
-  }
-
-  turnRight(): void {
-    this.transform.rotation.y -= 0.05;
+  moveZ(direction: number): void {
+    this.transform.position.z += direction * this.moveSpeed;
   }
 
   update(deltaTime: number): void {
