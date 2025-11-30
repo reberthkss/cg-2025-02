@@ -44,12 +44,12 @@ export class GameManager {
     this.shader = new ShaderProgram(gl, VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE);
     this.shader.use();
 
-    // Create camera (angled 3D view)
-    const cameraPosition = [0, 60, 40];  // High angle perspective
+    // Create camera (top-down view)
+    const cameraPosition = [0, 50, 0];   // Top-down view
     const cameraTarget = [0, 0, 0];      // Looking at origin
-    const cameraUp = [0, 1, 0];          // Up vector points Y-up
+    const cameraUp = [0, 0, -1];         // Up vector points along -Z (standard for top-down)
     this.camera = new Camera(cameraPosition, cameraTarget, cameraUp);
-    this.camera.setProjectionType(ProjectionType.PERSPECTIVE);
+    // this.camera.setProjectionType(ProjectionType.PERSPECTIVE); // Reverted to default (Ortho)
 
     // Create game objects
     // Create game objects
@@ -57,6 +57,10 @@ export class GameManager {
     this.maze = new Maze(gl, this.shader);
     this.coordinateAxes = new CoordinateAxes(gl, this.shader);
     this.scenario = new Scenario(gl, this.shader);
+
+    // Set fish spawn position
+    const startPos = this.maze.getStartPosition();
+    this.fish.setPosition(startPos.x, startPos.y, startPos.z);
 
     // Adjust camera to fit maze
     const mazeDims = this.maze.getDimensions();
@@ -222,8 +226,8 @@ export class GameManager {
 
     const fishPosition = this.fish.getPosition();
 
-    // Camera is now static to keep maze in view
-    // this.camera.setPosition(fishPosition.x, fishPosition.y + 30, fishPosition.z + 30);
+    // Aim camera at fish - REMOVED for static view
+    // this.camera.setTarget(fishPosition.x, fishPosition.y, fishPosition.z);
 
     // Update game objects with deltaTime
     this.fish.update(deltaTime);
@@ -236,6 +240,15 @@ export class GameManager {
     // Update aspect ratio
     const aspect = this.gl.canvas.width / this.gl.canvas.height;
     this.camera.setAspectRatio(aspect);
+
+    // Update Camera Uniforms (View & Projection)
+    const viewMatrix = this.camera.getViewMatrix();
+    this.shader.setUniformMatrix4fv('u_viewingMatrix', viewMatrix);
+
+    const projectionMatrix = this.camera.getProjectionMatrix();
+    this.shader.setUniformMatrix4fv('u_projectionMatrix', projectionMatrix);
+
+    this.shader.setUniform3fv('u_viewPosition', this.camera.getPosition());
 
     // Render scenario
     this.scenario.render(this.gl);

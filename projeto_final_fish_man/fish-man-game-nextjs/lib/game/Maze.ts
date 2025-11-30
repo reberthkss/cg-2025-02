@@ -11,7 +11,7 @@ export class Maze extends GameObject {
     private width: number;
     private height: number;
     private map: number[][];
-    private wallSize: number = 5.0; // Reverted to 5.0
+    private wallSize: number = 2.0; // Reverted to 2.0
 
     constructor(gl: WebGLRenderingContext, shader: ShaderProgram) {
         super();
@@ -56,7 +56,7 @@ export class Maze extends GameObject {
         const indices: number[] = [];
         let indexOffset = 0;
 
-        const wallHeight = 10.0;
+        const wallHeight = 2.0;
 
         for (let z = 0; z < this.height; z++) {
             for (let x = 0; x < this.width; x++) {
@@ -125,5 +125,19 @@ export class Maze extends GameObject {
             width: this.width * this.wallSize,
             depth: this.height * this.wallSize
         };
+    }
+
+    getStartPosition(): { x: number, y: number, z: number } {
+        for (let z = 0; z < this.height; z++) {
+            for (let x = 0; x < this.width; x++) {
+                if (this.map[z][x] === 0) {
+                    // Found first path
+                    const xPos = (x - this.width / 2) * this.wallSize + this.wallSize / 2;
+                    const zPos = (z - this.height / 2) * this.wallSize + this.wallSize / 2;
+                    return { x: xPos, y: 0, z: zPos };
+                }
+            }
+        }
+        return { x: 0, y: 0, z: 0 }; // Default if no path found
     }
 }

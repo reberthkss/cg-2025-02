@@ -70,6 +70,10 @@ export class Camera {
     this.aspectRatio = aspect;
   }
 
+  getFieldOfView(): number {
+    return this.fieldOfView;
+  }
+
   setProjectionType(type: ProjectionType): void {
     this.projectionType = type;
   }
