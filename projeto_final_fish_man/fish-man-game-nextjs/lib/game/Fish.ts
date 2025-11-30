@@ -19,6 +19,7 @@ export class Fish extends GameObject {
     this.transform.rotation.x = 0;
     this.transform.rotation.y = 0;
     this.transform.rotation.z = 0;
+    this.transform.scale = { x: 0.6, y: 0.6, z: 0.6 };
   }
 
   setMesh(mesh: Mesh): void {
