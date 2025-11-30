@@ -11,6 +11,7 @@ export class Maze extends GameObject {
     private width: number;
     private height: number;
     private map: number[][];
+    private wallSize: number = 5.0; // Reverted to 5.0
 
     constructor(gl: WebGLRenderingContext, shader: ShaderProgram) {
         super();
@@ -55,18 +56,17 @@ export class Maze extends GameObject {
         const indices: number[] = [];
         let indexOffset = 0;
 
-        const wallSize = 2.0; // Size of each wall block
-        const wallHeight = 2.0;
+        const wallHeight = 10.0;
 
         for (let z = 0; z < this.height; z++) {
             for (let x = 0; x < this.width; x++) {
                 if (this.map[z][x] === 1) {
                     // Create a cube at this position
-                    const cube = Primitives.createCube(wallSize / 2);
+                    const cube = Primitives.createCube(this.wallSize / 2);
 
                     // Offset vertices
-                    const xOffset = (x - this.width / 2) * wallSize + wallSize / 2;
-                    const zOffset = (z - this.height / 2) * wallSize + wallSize / 2;
+                    const xOffset = (x - this.width / 2) * this.wallSize + this.wallSize / 2;
+                    const zOffset = (z - this.height / 2) * this.wallSize + this.wallSize / 2;
                     const yOffset = wallHeight / 2; // Sit on floor
 
                     for (let i = 0; i < cube.positions.length; i += 3) {
@@ -122,8 +122,8 @@ export class Maze extends GameObject {
 
     getDimensions(): { width: number, depth: number } {
         return {
-            width: this.width * 2.0, // wallSize
-            depth: this.height * 2.0 // wallSize
+            width: this.width * this.wallSize,
+            depth: this.height * this.wallSize
         };
     }
 }

@@ -44,11 +44,12 @@ export class GameManager {
     this.shader = new ShaderProgram(gl, VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE);
     this.shader.use();
 
-    // Create camera (top-down view)
-    const cameraPosition = [0, 50, 0];   // Top-down view
+    // Create camera (angled 3D view)
+    const cameraPosition = [0, 60, 40];  // High angle perspective
     const cameraTarget = [0, 0, 0];      // Looking at origin
-    const cameraUp = [0, 0, -1];         // Up vector points along -Z (standard for top-down)
+    const cameraUp = [0, 1, 0];          // Up vector points Y-up
     this.camera = new Camera(cameraPosition, cameraTarget, cameraUp);
+    this.camera.setProjectionType(ProjectionType.PERSPECTIVE);
 
     // Create game objects
     // Create game objects
@@ -231,6 +232,11 @@ export class GameManager {
   private render(): void {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+
+    // Update aspect ratio
+    const aspect = this.gl.canvas.width / this.gl.canvas.height;
+    this.camera.setAspectRatio(aspect);
+
     // Render scenario
     this.scenario.render(this.gl);
 

@@ -10,7 +10,7 @@ export class Camera {
   private target: number[];
   private up: number[];
   private projectionType: ProjectionType;
-  
+
   // Projection bounds
   private xMin: number;
   private xMax: number;
@@ -18,6 +18,8 @@ export class Camera {
   private yMax: number;
   private zNear: number;
   private zFar: number;
+  private fieldOfView: number; // in radians
+  private aspectRatio: number;
 
   constructor(
     position: number[] = [0, 30, 15],  // Camera position in 3D space
@@ -28,15 +30,17 @@ export class Camera {
     this.target = target;
     this.up = up;
     this.projectionType = ProjectionType.ORTHOGRAPHIC;
-    
+
     // Default projection bounds (good for top-down games)
     // Larger area = more visible space, smaller values = more zoomed in
     this.xMin = -30.0;   // Left boundary
     this.xMax = 30.0;    // Right boundary (40 units wide view)
     this.yMin = -30.0;   // Bottom boundary
     this.yMax = 30.0;    // Top boundary (40 units tall view)
-    this.zNear = -10.0;  // Near clipping plane (objects closer than this are cut)
-    this.zFar = -200.0;  // Far clipping plane (objects farther than this are cut)
+    this.zNear = -1.0;   // Closer near plane for perspective
+    this.zFar = -2000.0; // Farther far plane
+    this.fieldOfView = 60 * Math.PI / 180; // 60 degrees
+    this.aspectRatio = 1.0;
   }
 
   getViewMatrix(): number[] {
@@ -49,10 +53,21 @@ export class Camera {
         this.xMin, this.xMax, this.yMin, this.yMax, this.zNear, this.zFar
       );
     } else {
+      // Calculate bounds based on FOV and Aspect Ratio for Perspective
+      // tan(fov/2) = top / |zNear|
+      const top = Math.abs(this.zNear) * Math.tan(this.fieldOfView * 0.5);
+      const bottom = -top;
+      const right = top * this.aspectRatio;
+      const left = -right;
+
       return m4.setPerspectiveProjectionMatrix(
-        this.xMin, this.xMax, this.yMin, this.yMax, this.zNear, this.zFar
+        left, right, bottom, top, this.zNear, this.zFar
       );
     }
+  }
+
+  setAspectRatio(aspect: number): void {
+    this.aspectRatio = aspect;
   }
 
   setProjectionType(type: ProjectionType): void {
@@ -72,8 +87,8 @@ export class Camera {
   }
 
   setProjectionBounds(
-    xMin: number, xMax: number, 
-    yMin: number, yMax: number, 
+    xMin: number, xMax: number,
+    yMin: number, yMax: number,
     zNear: number, zFar: number
   ): void {
     this.xMin = xMin;
