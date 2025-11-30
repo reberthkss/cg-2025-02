@@ -5,6 +5,7 @@ import { m4 } from '../m4';
 
 export class Fish extends GameObject {
   private mesh: Mesh | null = null;
+  private texture: WebGLTexture | null = null;
   private shader: ShaderProgram;
   private moveSpeed: number = 10;
   private time: number = 0;
@@ -24,14 +25,20 @@ export class Fish extends GameObject {
     this.mesh = mesh;
   }
 
+  setTexture(texture: WebGLTexture): void {
+    this.texture = texture;
+  }
+
   moveForward(): void {
     const angle = this.transform.rotation.y;
+    this.transform.position.x += this.moveSpeed * Math.sin(angle);
     this.transform.position.z += this.moveSpeed * Math.cos(angle);
   }
 
   moveBackward(): void {
     const angle = this.transform.rotation.y;
-    this.transform.position.z += this.moveSpeed * Math.cos(angle);
+    this.transform.position.x -= this.moveSpeed * Math.sin(angle);
+    this.transform.position.z -= this.moveSpeed * Math.cos(angle);
   }
 
   turnLeft(): void {
@@ -63,6 +70,16 @@ export class Fish extends GameObject {
     const texcoordLocation = this.shader.getAttribLocation('a_texcoord');
 
     this.mesh.bind(positionLocation, normalLocation, texcoordLocation);
+
+    // Bind texture if available
+    if (this.texture) {
+      this.shader.setUniform1i('u_useTexture', 1);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.texture);
+      this.shader.setUniform1i('u_texture', 0);
+    } else {
+      this.shader.setUniform1i('u_useTexture', 0);
+    }
 
     // Set model matrix
     this.shader.setUniformMatrix4fv('u_modelMatrix', this.modelMatrix);
