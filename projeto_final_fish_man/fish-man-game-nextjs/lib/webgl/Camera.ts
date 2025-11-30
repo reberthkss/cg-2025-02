@@ -36,7 +36,7 @@ export class Camera {
     this.yMin = -30.0;   // Bottom boundary
     this.yMax = 30.0;    // Top boundary (40 units tall view)
     this.zNear = -10.0;  // Near clipping plane (objects closer than this are cut)
-    this.zFar = -100.0;  // Far clipping plane (objects farther than this are cut)
+    this.zFar = -200.0;  // Far clipping plane (objects farther than this are cut)
   }
 
   getViewMatrix(): number[] {

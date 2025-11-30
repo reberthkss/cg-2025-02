@@ -41,8 +41,8 @@ export class GameManager {
     this.shader.use();
 
     // Create camera (top-down view)
-    const cameraPosition = [0, 50, 0];  // Camera above and behind looking down
-    const cameraTarget = [1, 0, 10];      // Looking at origin (center)
+    const cameraPosition = [0, 30, 30];  // Camera above and behind looking down
+    const cameraTarget = [0, 0, 0];      // Looking at origin (center)
     const cameraUp = [0, 1, 0];          // Up vector pointing upward (Y-axis)
     this.camera = new Camera(cameraPosition, cameraTarget, cameraUp);
 
@@ -62,10 +62,10 @@ export class GameManager {
     this.shader.setUniform3fv('u_lightPosition', [0.0, 40.0, 0.0]);
     this.shader.setUniform3fv('u_viewPosition', this.camera.getPosition());
     this.shader.setUniform3fv('u_color', [1.0, 0.0, 0.0]);
-    
+
     const viewMatrix = this.camera.getViewMatrix();
     this.shader.setUniformMatrix4fv('u_viewingMatrix', viewMatrix);
-    
+
     const projectionMatrix = this.camera.getProjectionMatrix();
     this.shader.setUniformMatrix4fv('u_projectionMatrix', projectionMatrix);
   }
@@ -134,8 +134,8 @@ export class GameManager {
       const texture = this.gl.createTexture();
       this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
       this.gl.texImage2D(
-        this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, 
-        this.gl.RGBA, this.gl.UNSIGNED_BYTE, 
+        this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0,
+        this.gl.RGBA, this.gl.UNSIGNED_BYTE,
         new Uint8Array([255, 255, 255, 255])
       );
 
@@ -144,7 +144,7 @@ export class GameManager {
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
         this.gl.texImage2D(
-          this.gl.TEXTURE_2D, 0, this.gl.RGBA, 
+          this.gl.TEXTURE_2D, 0, this.gl.RGBA,
           this.gl.RGBA, this.gl.UNSIGNED_BYTE, image
         );
 
@@ -190,7 +190,7 @@ export class GameManager {
       this.fish.turnRight();
     }
 
-    // Update game objects
+    // Update game objects with deltaTime
     this.fish.update(deltaTime);
   }
 
@@ -219,7 +219,7 @@ export class GameManager {
 
   start(): void {
     if (this.isRunning) return;
-    
+
     this.isRunning = true;
     this.lastFrameTime = performance.now();
     this.gameLoop(this.lastFrameTime);
