@@ -26,18 +26,12 @@ export class Fish extends GameObject {
 
   moveForward(): void {
     const angle = this.transform.rotation.y;
-    // this.transform.position.z -= this.moveSpeed * Math.cos(angle);
     this.transform.position.z += this.moveSpeed * Math.cos(angle);
-    // this.transform.position.z += this.moveSpeed;
-    // this.transform.position.x -= this.moveSpeed * Math.sin(angle);
-    // this.transform.rotation.x += 0.01;
   }
 
   moveBackward(): void {
     const angle = this.transform.rotation.y;
     this.transform.position.z += this.moveSpeed * Math.cos(angle);
-    // this.transform.position.x += this.moveSpeed * Math.sin(angle);
-    // this.transform.rotation.x -= 0.01;
   }
 
   turnLeft(): void {
@@ -50,13 +44,13 @@ export class Fish extends GameObject {
 
   update(deltaTime: number): void {
     this.time += deltaTime;
-    
+
     // Body wiggle animation
     const bodyWiggle = Math.sin(this.time * 4.0) * this.bodyWiggleAmplitude;
     const wiggleRad = (bodyWiggle * Math.PI) / 180;
 
     this.updateModelMatrix();
-    
+
     // Apply wiggle to the model matrix
     this.modelMatrix = m4.zRotate(this.modelMatrix, wiggleRad);
   }
@@ -72,7 +66,7 @@ export class Fish extends GameObject {
 
     // Set model matrix
     this.shader.setUniformMatrix4fv('u_modelMatrix', this.modelMatrix);
-    
+
     // Set inverse transpose for normals
     const inverseTranspose = m4.transpose(m4.inverse(this.modelMatrix));
     this.shader.setUniformMatrix4fv('u_inverseTransposeModelMatrix', inverseTranspose);

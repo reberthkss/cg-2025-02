@@ -190,6 +190,10 @@ export class GameManager {
       this.fish.turnRight();
     }
 
+    const fishPosition = this.fish.getPosition();
+
+    this.camera.setPosition(fishPosition.x, fishPosition.y, fishPosition.z);
+
     // Update game objects with deltaTime
     this.fish.update(deltaTime);
   }
