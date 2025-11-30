@@ -3,6 +3,7 @@ import { Camera, ProjectionType } from '../webgl/Camera';
 import { Mesh, MeshData } from '../webgl/Mesh';
 import { Fish } from '../game/Fish';
 import { CoordinateAxes } from '../game/CoordinateAxes';
+import { Scenario } from '../game/Scenario';
 import { InputManager, Key } from '../input/InputManager';
 import { OBJLoader } from '../loaders/OBJLoader';
 import { MTLLoader } from '../loaders/MTLLoader';
@@ -14,6 +15,7 @@ export class GameManager {
   private camera: Camera;
   private fish: Fish;
   private coordinateAxes: CoordinateAxes;
+  private scenario: Scenario;
   private inputManager: InputManager;
   private lastFrameTime: number = 0;
   private animationId: number = 0;
@@ -49,6 +51,12 @@ export class GameManager {
     // Create game objects
     this.fish = new Fish(this.shader);
     this.coordinateAxes = new CoordinateAxes(gl, this.shader);
+    this.scenario = new Scenario(gl, this.shader);
+
+    // Load scenario textures
+    this.scenario.loadTextures('/sand_texture.png', '/water_texture.png')
+      .then(() => console.log('Scenario textures loaded'))
+      .catch(err => console.error('Failed to load scenario textures:', err));
 
     // Create input manager
     this.inputManager = new InputManager();
@@ -62,6 +70,12 @@ export class GameManager {
     this.shader.setUniform3fv('u_lightPosition', [0.0, 40.0, 0.0]);
     this.shader.setUniform3fv('u_viewPosition', this.camera.getPosition());
     this.shader.setUniform3fv('u_color', [1.0, 0.0, 0.0]);
+
+    // Lighting and Fog
+    this.shader.setUniform3fv('u_ambientLight', [0.2, 0.3, 0.4]); // Blue-ish ambient
+    this.shader.setUniform3fv('u_lightColor', [1.0, 0.9, 0.8]);   // Warm sunlight
+    this.shader.setUniform3fv('u_fogColor', [0.0, 0.4, 0.6]);     // Deep blue fog
+    this.shader.setUniform1f('u_fogDensity', 0.02);
 
     const viewMatrix = this.camera.getViewMatrix();
     this.shader.setUniformMatrix4fv('u_viewingMatrix', viewMatrix);
@@ -108,21 +122,24 @@ export class GameManager {
     // Load texture if MTL exists
     if (objData.mtlFile || mtlPath) {
       const mtlFilePath = mtlPath || '/' + objData.mtlFile;
-      await this.loadTexture(mtlFilePath);
+      const texture = await this.loadTexture(mtlFilePath);
+      if (texture) {
+        this.fish.setTexture(texture);
+      }
     }
   }
 
-  private async loadTexture(mtlPath: string): Promise<void> {
+  private async loadTexture(mtlPath: string): Promise<WebGLTexture | null> {
     const materials = await MTLLoader.loadFromFile(mtlPath);
     if (!materials) {
       console.warn('Failed to load MTL file');
-      return;
+      return null;
     }
 
     console.log('MTL loaded successfully');
 
     const firstMaterial = Object.values(materials)[0];
-    if (!firstMaterial) return;
+    if (!firstMaterial) return null;
 
     // Set material color
     if (firstMaterial.diffuse) {
@@ -131,58 +148,59 @@ export class GameManager {
 
     // Load texture image
     if (firstMaterial.textureMap) {
-      const texture = this.gl.createTexture();
-      this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-      this.gl.texImage2D(
-        this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0,
-        this.gl.RGBA, this.gl.UNSIGNED_BYTE,
-        new Uint8Array([255, 255, 255, 255])
-      );
-
-      const image = new Image();
-      image.onload = () => {
+      return new Promise((resolve) => {
+        const texture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
         this.gl.texImage2D(
-          this.gl.TEXTURE_2D, 0, this.gl.RGBA,
-          this.gl.RGBA, this.gl.UNSIGNED_BYTE, image
+          this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0,
+          this.gl.RGBA, this.gl.UNSIGNED_BYTE,
+          new Uint8Array([255, 255, 255, 255])
         );
 
-        const isPowerOf2 = (value: number) => (value & (value - 1)) === 0;
-        if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-          this.gl.generateMipmap(this.gl.TEXTURE_2D);
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_LINEAR);
-        } else {
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        }
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-        this.shader.setUniform1i('u_useTexture', 1);
-        console.log('Texture loaded:', firstMaterial.textureMap);
-      };
+        const image = new Image();
+        image.onload = () => {
+          this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+          this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+          this.gl.texImage2D(
+            this.gl.TEXTURE_2D, 0, this.gl.RGBA,
+            this.gl.RGBA, this.gl.UNSIGNED_BYTE, image
+          );
 
-      image.onerror = () => {
-        console.warn('Failed to load texture:', firstMaterial.textureMap);
-        this.shader.setUniform1i('u_useTexture', 0);
-      };
+          const isPowerOf2 = (value: number) => (value & (value - 1)) === 0;
+          if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+            this.gl.generateMipmap(this.gl.TEXTURE_2D);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_LINEAR);
+          } else {
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+          }
+          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+          console.log('Texture loaded:', firstMaterial.textureMap);
+          resolve(texture);
+        };
 
-      image.src = '/' + firstMaterial.textureMap;
+        image.onerror = () => {
+          console.warn('Failed to load texture:', firstMaterial.textureMap);
+          resolve(null);
+        };
 
-      this.gl.activeTexture(this.gl.TEXTURE0);
-      this.shader.setUniform1i('u_texture', 0);
-      this.shader.setUniform1i('u_useTexture', 0);
+        image.src = '/' + firstMaterial.textureMap;
+      });
     }
+    return null;
   }
 
   private update(deltaTime: number): void {
     // Handle continuous input
+    let moveSpeed = 0;
     if (this.inputManager.isKeyPressed(Key.W)) {
-      this.fish.moveForward();
+      moveSpeed = this.fish.getMoveSpeed();
     }
     if (this.inputManager.isKeyPressed(Key.S)) {
-      this.fish.moveBackward();
+      moveSpeed = -this.fish.getMoveSpeed();
     }
+
     if (this.inputManager.isKeyPressed(Key.A)) {
       this.fish.turnLeft();
     }
@@ -192,7 +210,7 @@ export class GameManager {
 
     const fishPosition = this.fish.getPosition();
 
-    this.camera.setPosition(fishPosition.x, fishPosition.y, fishPosition.z);
+    this.camera.setPosition(fishPosition.x, fishPosition.y + 30, fishPosition.z + 30); // Offset camera
 
     // Update game objects with deltaTime
     this.fish.update(deltaTime);
@@ -201,6 +219,8 @@ export class GameManager {
   private render(): void {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+    // Render scenario
+    this.scenario.render(this.gl);
 
     // Render fish
     this.fish.render(this.gl);

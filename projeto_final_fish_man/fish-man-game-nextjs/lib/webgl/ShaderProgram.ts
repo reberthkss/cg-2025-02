@@ -6,16 +6,16 @@ export class ShaderProgram {
 
   constructor(gl: WebGLRenderingContext, vertexSource: string, fragmentSource: string) {
     this.gl = gl;
-    
+
     const vertexShader = this.createShader(gl.VERTEX_SHADER, vertexSource);
     const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, fragmentSource);
-    
+
     if (!vertexShader || !fragmentShader) {
       throw new Error('Failed to create shaders');
     }
 
     this.program = this.createProgram(vertexShader, fragmentShader);
-    
+
     if (!this.program) {
       throw new Error('Failed to create shader program');
     }
@@ -85,6 +85,13 @@ export class ShaderProgram {
     const location = this.getUniformLocation(name);
     if (location) {
       this.gl.uniform1i(location, value);
+    }
+  }
+
+  setUniform1f(name: string, value: number): void {
+    const location = this.getUniformLocation(name);
+    if (location) {
+      this.gl.uniform1f(location, value);
     }
   }
 

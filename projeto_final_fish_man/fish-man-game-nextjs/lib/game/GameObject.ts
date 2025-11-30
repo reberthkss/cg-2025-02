@@ -35,6 +35,10 @@ export abstract class GameObject {
     return this.transform.position;
   }
 
+  getRotation(): { x: number; y: number; z: number } {
+    return this.transform.rotation;
+  }
+
   translate(dx: number, dy: number, dz: number): void {
     this.transform.position.x += dx;
     this.transform.position.y += dy;
@@ -49,7 +53,7 @@ export abstract class GameObject {
 
   updateModelMatrix(): void {
     this.modelMatrix = m4.identity();
-    
+
     // Apply transformations: translate -> rotate -> scale
     this.modelMatrix = m4.translate(
       this.modelMatrix,
