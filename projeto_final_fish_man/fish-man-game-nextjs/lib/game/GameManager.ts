@@ -2,6 +2,7 @@ import { ShaderProgram } from '../webgl/ShaderProgram';
 import { Camera, ProjectionType } from '../webgl/Camera';
 import { Mesh, MeshData } from '../webgl/Mesh';
 import { Fish } from '../game/Fish';
+import { Maze } from '../game/Maze';
 import { CoordinateAxes } from '../game/CoordinateAxes';
 import { Scenario } from '../game/Scenario';
 import { InputManager, Key } from '../input/InputManager';
@@ -14,6 +15,7 @@ export class GameManager {
   private shader: ShaderProgram;
   private camera: Camera;
   private fish: Fish;
+  private maze: Maze;
   private coordinateAxes: CoordinateAxes;
   private scenario: Scenario;
   private inputManager: InputManager;
@@ -43,15 +45,24 @@ export class GameManager {
     this.shader.use();
 
     // Create camera (top-down view)
-    const cameraPosition = [0, 30, 30];  // Camera above and behind looking down
-    const cameraTarget = [0, 0, 0];      // Looking at origin (center)
-    const cameraUp = [0, 1, 0];          // Up vector pointing upward (Y-axis)
+    const cameraPosition = [0, 50, 0];   // Top-down view
+    const cameraTarget = [0, 0, 0];      // Looking at origin
+    const cameraUp = [0, 0, -1];         // Up vector points along -Z (standard for top-down)
     this.camera = new Camera(cameraPosition, cameraTarget, cameraUp);
 
     // Create game objects
+    // Create game objects
     this.fish = new Fish(this.shader);
+    this.maze = new Maze(gl, this.shader);
     this.coordinateAxes = new CoordinateAxes(gl, this.shader);
     this.scenario = new Scenario(gl, this.shader);
+
+    // Adjust camera to fit maze
+    const mazeDims = this.maze.getDimensions();
+    const maxDim = Math.max(mazeDims.width, mazeDims.depth);
+    const margin = 10;
+    const bound = maxDim / 2 + margin;
+    this.camera.setProjectionBounds(-bound, bound, -bound, bound, -10, -200);
 
     // Load scenario textures
     this.scenario.loadTextures('/sand_texture.png', '/water_texture.png')
@@ -210,7 +221,8 @@ export class GameManager {
 
     const fishPosition = this.fish.getPosition();
 
-    this.camera.setPosition(fishPosition.x, fishPosition.y + 30, fishPosition.z + 30); // Offset camera
+    // Camera is now static to keep maze in view
+    // this.camera.setPosition(fishPosition.x, fishPosition.y + 30, fishPosition.z + 30);
 
     // Update game objects with deltaTime
     this.fish.update(deltaTime);
@@ -221,6 +233,9 @@ export class GameManager {
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
     // Render scenario
     this.scenario.render(this.gl);
+
+    // Render maze
+    this.maze.render(this.gl);
 
     // Render fish
     this.fish.render(this.gl);
