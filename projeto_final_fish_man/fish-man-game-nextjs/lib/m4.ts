@@ -1,5 +1,5 @@
 export const m4 = {
-  identity: function() {
+  identity: function () {
     return [
       1, 0, 0, 0,
       0, 1, 0, 0,
@@ -8,16 +8,16 @@ export const m4 = {
     ];
   },
 
-  transpose: function(m: number[] | Float32Array) {
+  transpose: function (m: number[] | Float32Array) {
     return [
-      m[0], m[4], m[8],  m[12],
-      m[1], m[5], m[9],  m[13],
+      m[0], m[4], m[8], m[12],
+      m[1], m[5], m[9], m[13],
       m[2], m[6], m[10], m[14],
       m[3], m[7], m[11], m[15],
     ];
   },
 
-  inverse: function(m: number[] | Float32Array, dst?: Float32Array) {
+  inverse: function (m: number[] | Float32Array, dst?: Float32Array) {
     dst = dst || new Float32Array(16);
     var m00 = m[0 * 4 + 0];
     var m01 = m[0 * 4 + 1];
@@ -59,83 +59,91 @@ export const m4 = {
     var tmp_21 = m20 * m01;
     var tmp_22 = m00 * m11;
     var tmp_23 = m10 * m01;
-    
+
     var t0 = (tmp_0 * m11 + tmp_3 * m21 + tmp_4 * m31) -
-    (tmp_1 * m11 + tmp_2 * m21 + tmp_5 * m31);
+      (tmp_1 * m11 + tmp_2 * m21 + tmp_5 * m31);
     var t1 = (tmp_1 * m01 + tmp_6 * m21 + tmp_9 * m31) -
-    (tmp_0 * m01 + tmp_7 * m21 + tmp_8 * m31);
+      (tmp_0 * m01 + tmp_7 * m21 + tmp_8 * m31);
     var t2 = (tmp_2 * m01 + tmp_7 * m11 + tmp_10 * m31) -
-    (tmp_3 * m01 + tmp_6 * m11 + tmp_11 * m31);
+      (tmp_3 * m01 + tmp_6 * m11 + tmp_11 * m31);
     var t3 = (tmp_5 * m01 + tmp_8 * m11 + tmp_11 * m21) -
-    (tmp_4 * m01 + tmp_9 * m11 + tmp_10 * m21);
-    
+      (tmp_4 * m01 + tmp_9 * m11 + tmp_10 * m21);
+
     var d = 1.0 / (m00 * t0 + m10 * t1 + m20 * t2 + m30 * t3);
-    
+
     dst[0] = d * t0;
     dst[1] = d * t1;
     dst[2] = d * t2;
     dst[3] = d * t3;
     dst[4] = d * ((tmp_1 * m10 + tmp_2 * m20 + tmp_5 * m30) -
-    (tmp_0 * m10 + tmp_3 * m20 + tmp_4 * m30));
+      (tmp_0 * m10 + tmp_3 * m20 + tmp_4 * m30));
     dst[5] = d * ((tmp_0 * m00 + tmp_7 * m20 + tmp_8 * m30) -
-    (tmp_1 * m00 + tmp_6 * m20 + tmp_9 * m30));
+      (tmp_1 * m00 + tmp_6 * m20 + tmp_9 * m30));
     dst[6] = d * ((tmp_3 * m00 + tmp_6 * m10 + tmp_11 * m30) -
-    (tmp_2 * m00 + tmp_7 * m10 + tmp_10 * m30));
+      (tmp_2 * m00 + tmp_7 * m10 + tmp_10 * m30));
     dst[7] = d * ((tmp_4 * m00 + tmp_9 * m10 + tmp_10 * m20) -
-    (tmp_5 * m00 + tmp_8 * m10 + tmp_11 * m20));
+      (tmp_5 * m00 + tmp_8 * m10 + tmp_11 * m20));
     dst[8] = d * ((tmp_12 * m13 + tmp_15 * m23 + tmp_16 * m33) -
-    (tmp_13 * m13 + tmp_14 * m23 + tmp_17 * m33));
+      (tmp_13 * m13 + tmp_14 * m23 + tmp_17 * m33));
     dst[9] = d * ((tmp_13 * m03 + tmp_18 * m23 + tmp_21 * m33) -
-    (tmp_12 * m03 + tmp_19 * m23 + tmp_20 * m33));
+      (tmp_12 * m03 + tmp_19 * m23 + tmp_20 * m33));
     dst[10] = d * ((tmp_14 * m03 + tmp_19 * m13 + tmp_22 * m33) -
-    (tmp_15 * m03 + tmp_18 * m13 + tmp_23 * m33));
+      (tmp_15 * m03 + tmp_18 * m13 + tmp_23 * m33));
     dst[11] = d * ((tmp_17 * m03 + tmp_20 * m13 + tmp_23 * m23) -
-    (tmp_16 * m03 + tmp_21 * m13 + tmp_22 * m23));
+      (tmp_16 * m03 + tmp_21 * m13 + tmp_22 * m23));
     dst[12] = d * ((tmp_14 * m22 + tmp_17 * m32 + tmp_13 * m12) -
-    (tmp_16 * m32 + tmp_12 * m12 + tmp_15 * m22));
+      (tmp_16 * m32 + tmp_12 * m12 + tmp_15 * m22));
     dst[13] = d * ((tmp_20 * m32 + tmp_12 * m02 + tmp_19 * m22) -
-    (tmp_18 * m22 + tmp_21 * m32 + tmp_13 * m02));
+      (tmp_18 * m22 + tmp_21 * m32 + tmp_13 * m02));
     dst[14] = d * ((tmp_18 * m12 + tmp_23 * m32 + tmp_15 * m02) -
-    (tmp_22 * m32 + tmp_14 * m02 + tmp_19 * m12));
+      (tmp_22 * m32 + tmp_14 * m02 + tmp_19 * m12));
     dst[15] = d * ((tmp_22 * m22 + tmp_16 * m02 + tmp_21 * m12) -
-    (tmp_20 * m12 + tmp_23 * m22 + tmp_17 * m02));
-    
+      (tmp_20 * m12 + tmp_23 * m22 + tmp_17 * m02));
+
     return dst;
   },
 
-  multiply: function(a: number[], b: number[]) {
+  multiply: function (a: number[], b: number[]) {
     var a00 = a[0 * 4 + 0];
     var a01 = a[1 * 4 + 0];
     var a02 = a[2 * 4 + 0];
     var a03 = a[3 * 4 + 0];
+
     var a10 = a[0 * 4 + 1];
     var a11 = a[1 * 4 + 1];
     var a12 = a[2 * 4 + 1];
     var a13 = a[3 * 4 + 1];
+
     var a20 = a[0 * 4 + 2];
     var a21 = a[1 * 4 + 2];
     var a22 = a[2 * 4 + 2];
     var a23 = a[3 * 4 + 2];
+
     var a30 = a[0 * 4 + 3];
     var a31 = a[1 * 4 + 3];
     var a32 = a[2 * 4 + 3];
     var a33 = a[3 * 4 + 3];
+
     var b00 = b[0 * 4 + 0];
     var b01 = b[1 * 4 + 0];
     var b02 = b[2 * 4 + 0];
     var b03 = b[3 * 4 + 0];
+
     var b10 = b[0 * 4 + 1];
     var b11 = b[1 * 4 + 1];
     var b12 = b[2 * 4 + 1];
     var b13 = b[3 * 4 + 1];
+
     var b20 = b[0 * 4 + 2];
     var b21 = b[1 * 4 + 2];
     var b22 = b[2 * 4 + 2];
-    var b23 = b[2 * 4 + 2];
+    var b23 = b[3 * 4 + 2];
+
     var b30 = b[0 * 4 + 3];
     var b31 = b[1 * 4 + 3];
     var b32 = b[2 * 4 + 3];
     var b33 = b[3 * 4 + 3];
+    
     return [
       a00 * b00 + a01 * b10 + a02 * b20 + a03 * b30,
       a10 * b00 + a11 * b10 + a12 * b20 + a13 * b30,
@@ -156,109 +164,109 @@ export const m4 = {
     ];
   },
 
-  translation: function(tx: number, ty: number, tz: number) {
+  translation: function (tx: number, ty: number, tz: number) {
     return [
-        1,  0,  0,  0,
-        0,  1,  0,  0,
-        0,  0,  1,  0,
-        tx, ty, tz, 1,
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      tx, ty, tz, 1,
     ];
   },
 
-  xRotation: function(angleInRadians: number) {
+  xRotation: function (angleInRadians: number) {
     var c = Math.cos(angleInRadians);
     var s = Math.sin(angleInRadians);
 
     return [
-      1,  0, 0, 0,
-      0,  c, s, 0,
+      1, 0, 0, 0,
+      0, c, s, 0,
       0, -s, c, 0,
-      0,  0, 0, 1,
+      0, 0, 0, 1,
     ];
   },
 
-  yRotation: function(angleInRadians: number) {
+  yRotation: function (angleInRadians: number) {
     var c = Math.cos(angleInRadians);
     var s = Math.sin(angleInRadians);
 
     return [
       c, 0, -s, 0,
-      0, 1,  0, 0,
-      s, 0,  c, 0,
-      0, 0,  0, 1,
+      0, 1, 0, 0,
+      s, 0, c, 0,
+      0, 0, 0, 1,
     ];
   },
 
-  zRotation: function(angleInRadians: number) {
+  zRotation: function (angleInRadians: number) {
     var c = Math.cos(angleInRadians);
     var s = Math.sin(angleInRadians);
 
     return [
-        c, s, 0, 0,
-       -s, c, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1,
+      c, s, 0, 0,
+      -s, c, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
     ];
   },
 
-  scaling: function(sx: number, sy: number, sz: number) {
+  scaling: function (sx: number, sy: number, sz: number) {
     return [
-      sx, 0,  0,  0,
-      0, sy,  0,  0,
-      0,  0, sz,  0,
-      0,  0,  0,  1,
+      sx, 0, 0, 0,
+      0, sy, 0, 0,
+      0, 0, sz, 0,
+      0, 0, 0, 1,
     ];
   },
 
-  translate: function(m: number[], tx: number, ty: number, tz: number) {
-    return m4.multiply(m4.translation(tx, ty, tz),m);
+  translate: function (m: number[], tx: number, ty: number, tz: number) {
+    return m4.multiply(m4.translation(tx, ty, tz), m);
   },
 
-  xRotate: function(m: number[], angleInRadians: number) {
-    return m4.multiply(m4.xRotation(angleInRadians),m);
+  xRotate: function (m: number[], angleInRadians: number) {
+    return m4.multiply(m4.xRotation(angleInRadians), m);
   },
 
-  yRotate: function(m: number[], angleInRadians: number) {
-    return m4.multiply(m4.yRotation(angleInRadians),m);
+  yRotate: function (m: number[], angleInRadians: number) {
+    return m4.multiply(m4.yRotation(angleInRadians), m);
   },
 
-  zRotate: function(m: number[], angleInRadians: number) {
-    return m4.multiply(m4.zRotation(angleInRadians),m);
+  zRotate: function (m: number[], angleInRadians: number) {
+    return m4.multiply(m4.zRotation(angleInRadians), m);
   },
 
-  scale: function(m: number[], sx: number, sy: number, sz: number) {
-    return m4.multiply(m4.scaling(sx, sy, sz),m);
+  scale: function (m: number[], sx: number, sy: number, sz: number) {
+    return m4.multiply(m4.scaling(sx, sy, sz), m);
   },
 
-  unitVector: function(v: number[]){ 
+  unitVector: function (v: number[]) {
     let vModulus = m4.vectorModulus(v);
-    return v.map(function(x) { return x/vModulus; });
+    return v.map(function (x) { return x / vModulus; });
   },
 
-  vectorModulus: function(v: number[]){
-    return Math.sqrt(Math.pow(v[0],2)+Math.pow(v[1],2)+Math.pow(v[2],2));
+  vectorModulus: function (v: number[]) {
+    return Math.sqrt(Math.pow(v[0], 2) + Math.pow(v[1], 2) + Math.pow(v[2], 2));
   },
 
-  crossProduct: function(v1: number[],v2: number[]){
+  crossProduct: function (v1: number[], v2: number[]) {
     let result = [
-        v1[1]*v2[2] - v1[2]*v2[1],
-        v1[2]*v2[0] - v1[0]*v2[2],
-        v1[0]*v2[1] - v1[1]*v2[0]
+      v1[1] * v2[2] - v1[2] * v2[1],
+      v1[2] * v2[0] - v1[0] * v2[2],
+      v1[0] * v2[1] - v1[1] * v2[0]
     ];
     return result;
   },
 
-  setViewingMatrix: function(P0: number[],Pref: number[],V: number[]){
+  setViewingMatrix: function (P0: number[], Pref: number[], V: number[]) {
     let N = [
-      P0[0]-Pref[0],
-      P0[1]-Pref[1],
-      P0[2]-Pref[2]
+      P0[0] - Pref[0],
+      P0[1] - Pref[1],
+      P0[2] - Pref[2]
     ];
     let n = m4.unitVector(N);
-    let u = m4.unitVector(m4.crossProduct(V,n));
-    let v = m4.crossProduct(n,u);
+    let u = m4.unitVector(m4.crossProduct(V, n));
+    let v = m4.crossProduct(n, u);
 
-    let translationMatrix = m4.translation(-P0[0],-P0[1],-P0[2]);
+    let translationMatrix = m4.translation(-P0[0], -P0[1], -P0[2]);
     let rotationMatrix = [
       u[0], v[0], n[0], 0,
       u[1], v[1], n[1], 0,
@@ -266,24 +274,24 @@ export const m4 = {
       0, 0, 0, 1
     ];
 
-    return m4.multiply(rotationMatrix,translationMatrix);
+    return m4.multiply(rotationMatrix, translationMatrix);
   },
 
-  setOrthographicProjectionMatrix: function(xw_min: number,xw_max: number,yw_min: number,yw_max: number,z_near: number,z_far: number){
+  setOrthographicProjectionMatrix: function (xw_min: number, xw_max: number, yw_min: number, yw_max: number, z_near: number, z_far: number) {
     return [
-      2/(xw_max-xw_min), 0, 0, 0,
-      0, 2/(yw_max-yw_min), 0, 0,
-      0, 0, -2/(z_near-z_far), 0,
-      -(xw_max+xw_min)/(xw_max-xw_min), -(yw_max+yw_min)/(yw_max-yw_min), (z_near+z_far)/(z_near-z_far), 1
+      2 / (xw_max - xw_min), 0, 0, 0,
+      0, 2 / (yw_max - yw_min), 0, 0,
+      0, 0, -2 / (z_near - z_far), 0,
+      -(xw_max + xw_min) / (xw_max - xw_min), -(yw_max + yw_min) / (yw_max - yw_min), (z_near + z_far) / (z_near - z_far), 1
     ];
   },
 
-  setPerspectiveProjectionMatrix: function(xw_min: number,xw_max: number,yw_min: number,yw_max: number,z_near: number,z_far: number){
+  setPerspectiveProjectionMatrix: function (xw_min: number, xw_max: number, yw_min: number, yw_max: number, z_near: number, z_far: number) {
     return [
-      (-2*z_near)/(xw_max-xw_min), 0, 0, 0,
-      0, (-2*z_near)/(yw_max-yw_min), 0, 0,
-      (xw_max+xw_min)/(xw_max-xw_min), (yw_max+yw_min)/(yw_max-yw_min), (z_near+z_far)/(z_near-z_far), -1,
-      0, 0, -(2*z_near*z_far)/(z_near-z_far), 0
+      (-2 * z_near) / (xw_max - xw_min), 0, 0, 0,
+      0, (-2 * z_near) / (yw_max - yw_min), 0, 0,
+      (xw_max + xw_min) / (xw_max - xw_min), (yw_max + yw_min) / (yw_max - yw_min), (z_near + z_far) / (z_near - z_far), -1,
+      0, 0, -(2 * z_near * z_far) / (z_near - z_far), 0
     ];
   }
 };

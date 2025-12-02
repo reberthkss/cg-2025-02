@@ -66,7 +66,7 @@ export class Maze extends GameObject {
 
                     // Offset vertices
                     const xOffset = (x - this.width / 2) * this.wallSize + this.wallSize / 2;
-                    const zOffset = (z - this.height / 2) * this.wallSize + this.wallSize / 2;
+                    const zOffset = ((z - this.height / 2) * this.wallSize + this.wallSize / 2);
                     const yOffset = wallHeight / 2; // Sit on floor
 
                     for (let i = 0; i < cube.positions.length; i += 3) {
@@ -99,6 +99,8 @@ export class Maze extends GameObject {
             indices: new Uint32Array(indices)
         };
     }
+
+    update(deltaTime: number): void {}
 
     render(gl: WebGLRenderingContext): void {
         const positionLocation = this.shader.getAttribLocation('a_position');
