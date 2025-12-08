@@ -37,48 +37,53 @@ export class Fish extends GameObject {
     this.transform.rotation.z = 0;
   }
 
-  moveX(direction: number, checkCollision?: (x: number, z: number) => boolean): void {
+  /**
+   * Move fish with diagonal support and automatic rotation
+   * @param directionX X-axis direction (-1 left, 0 none, 1 right)
+   * @param directionZ Z-axis direction (-1 forward, 0 none, 1 backward)
+   * @param checkCollision Optional collision check function
+   */
+  move(directionX: number, directionZ: number, checkCollision?: (x: number, z: number) => boolean): void {
     this.resetRotation();
-    
-    const newX = this.transform.position.x + direction * this.moveSpeed;
-    
+
+    // Calculate movement vector
+    let moveX = directionX * this.moveSpeed;
+    let moveZ = directionZ * this.moveSpeed;
+
+    // Normalize diagonal movement to maintain consistent speed
+    if (directionX !== 0 && directionZ !== 0) {
+      const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+      moveX = (moveX / length) * this.moveSpeed;
+      moveZ = (moveZ / length) * this.moveSpeed;
+    }
+
+    const newX = this.transform.position.x + moveX;
+    const newZ = this.transform.position.z + moveZ;
+
     // Check collision before moving
-    if (checkCollision && checkCollision(newX, this.transform.position.z)) {
+    if (checkCollision && checkCollision(newX, newZ)) {
       return; // Blocked by wall
     }
-    
+
+    // Update position
     this.transform.position.x = newX;
-    
-    // Rotate to face movement direction (left/right)
-    if (direction < 0) {
-      // Moving left - rotate to face left
-      this.transform.rotation.y = -Math.PI / 2; // 90 degrees
-    } else if (direction > 0) {
-      // Moving right - rotate to face right
-      this.transform.rotation.y = Math.PI / 2; // -90 degrees
+    this.transform.position.z = newZ;
+
+    // Calculate rotation based on movement direction
+    if (directionX !== 0 || directionZ !== 0) {
+      // Calculate angle in radians (atan2 gives angle from positive X-axis)
+      const angle = Math.atan2(directionX, directionZ);
+      this.transform.rotation.y = angle;
     }
   }
 
-  moveZ(direction: number, checkCollision?: (x: number, z: number) => boolean): void {
-    this.resetRotation();
+  // Keep legacy methods for compatibility
+  moveX(direction: number, checkCollision?: (x: number, z: number) => boolean): void {
+    this.move(direction, 0, checkCollision);
+  }
 
-    const newZ = this.transform.position.z + direction * this.moveSpeed;
-    
-    // Check collision before moving
-    if (checkCollision && checkCollision(this.transform.position.x, newZ)) {
-      return; // Blocked by wall
-    }
-    
-    this.transform.position.z = newZ;
-    
-    // Rotate to face movement direction (forward/backward)
-    if (direction < 0) {
-      // Moving forward - rotate to face forward
-      this.transform.rotation.x = Math.PI; // 0 degrees
-    } else if (direction > 0) {
-      // Moving backward - rotate to face backward
-      this.transform.rotation.x = 0; // 180 degrees
-    }
+  moveZ(direction: number, checkCollision?: (x: number, z: number) => boolean): void {
+    this.move(0, direction, checkCollision);
   }
 
   update(deltaTime: number): void {

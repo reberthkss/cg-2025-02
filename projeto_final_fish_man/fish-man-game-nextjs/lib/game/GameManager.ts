@@ -213,19 +213,26 @@ export class GameManager {
       return this.maze.checkCollision(x, z, this.fish.getCollisionRadius());
     };
 
-    // Handle continuous input with collision checking
+    // Collect input directions
+    let directionX = 0;
+    let directionZ = 0;
+
     if (this.inputManager.isKeyPressed(Key.W)) {
-      this.fish.moveZ(-1, checkCollision);
+      directionZ -= 1; // Forward
     }
     if (this.inputManager.isKeyPressed(Key.S)) {
-      this.fish.moveZ(1, checkCollision);
+      directionZ += 1; // Backward
     }
-
     if (this.inputManager.isKeyPressed(Key.A)) {
-      this.fish.moveX(-1, checkCollision);
+      directionX -= 1; // Left
     }
     if (this.inputManager.isKeyPressed(Key.D)) {
-      this.fish.moveX(1, checkCollision);
+      directionX += 1; // Right
+    }
+
+    // Move fish with combined input (supports diagonal movement)
+    if (directionX !== 0 || directionZ !== 0) {
+      this.fish.move(directionX, directionZ, checkCollision);
     }
 
     const fishPosition = this.fish.getPosition();
