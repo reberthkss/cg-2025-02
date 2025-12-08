@@ -208,19 +208,24 @@ export class GameManager {
   }
 
   private update(deltaTime: number): void {
-    // Handle continuous input
+    // Create collision check function for fish
+    const checkCollision = (x: number, z: number): boolean => {
+      return this.maze.checkCollision(x, z, this.fish.getCollisionRadius());
+    };
+
+    // Handle continuous input with collision checking
     if (this.inputManager.isKeyPressed(Key.W)) {
-      this.fish.moveZ(-1);
+      this.fish.moveZ(-1, checkCollision);
     }
     if (this.inputManager.isKeyPressed(Key.S)) {
-      this.fish.moveZ(1);
+      this.fish.moveZ(1, checkCollision);
     }
 
     if (this.inputManager.isKeyPressed(Key.A)) {
-      this.fish.moveX(-1);
+      this.fish.moveX(-1, checkCollision);
     }
     if (this.inputManager.isKeyPressed(Key.D)) {
-      this.fish.moveX(1);
+      this.fish.moveX(1, checkCollision);
     }
 
     const fishPosition = this.fish.getPosition();

@@ -10,6 +10,7 @@ export class Fish extends GameObject {
   private moveSpeed: number = 0.1;
   private time: number = 0;
   private bodyWiggleAmplitude: number = 3.0;
+  private collisionRadius: number = 0.1; // Reduced collision radius
 
   constructor(shader: ShaderProgram) {
     super();
@@ -19,7 +20,7 @@ export class Fish extends GameObject {
     this.transform.rotation.x = 0;
     this.transform.rotation.y = 0;
     this.transform.rotation.z = 0;
-    this.transform.scale = { x: 0.6, y: 0.6, z: 0.6 };
+    this.transform.scale = { x: 0.4, y: 0.4, z: 0.4 }; // Reduced scale
   }
 
   setMesh(mesh: Mesh): void {
@@ -36,9 +37,18 @@ export class Fish extends GameObject {
     this.transform.rotation.z = 0;
   }
 
-  moveX(direction: number): void {
+  moveX(direction: number, checkCollision?: (x: number, z: number) => boolean): void {
     this.resetRotation();
-    this.transform.position.x += direction * this.moveSpeed;
+    
+    const newX = this.transform.position.x + direction * this.moveSpeed;
+    
+    // Check collision before moving
+    if (checkCollision && checkCollision(newX, this.transform.position.z)) {
+      return; // Blocked by wall
+    }
+    
+    this.transform.position.x = newX;
+    
     // Rotate to face movement direction (left/right)
     if (direction < 0) {
       // Moving left - rotate to face left
@@ -49,10 +59,18 @@ export class Fish extends GameObject {
     }
   }
 
-  moveZ(direction: number): void {
+  moveZ(direction: number, checkCollision?: (x: number, z: number) => boolean): void {
     this.resetRotation();
 
-    this.transform.position.z += direction * this.moveSpeed;
+    const newZ = this.transform.position.z + direction * this.moveSpeed;
+    
+    // Check collision before moving
+    if (checkCollision && checkCollision(this.transform.position.x, newZ)) {
+      return; // Blocked by wall
+    }
+    
+    this.transform.position.z = newZ;
+    
     // Rotate to face movement direction (forward/backward)
     if (direction < 0) {
       // Moving forward - rotate to face forward
@@ -111,5 +129,9 @@ export class Fish extends GameObject {
 
   setMoveSpeed(speed: number): void {
     this.moveSpeed = speed;
+  }
+
+  getCollisionRadius(): number {
+    return this.collisionRadius;
   }
 }
