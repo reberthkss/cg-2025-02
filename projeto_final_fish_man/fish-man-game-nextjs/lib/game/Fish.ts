@@ -30,12 +30,37 @@ export class Fish extends GameObject {
     this.texture = texture;
   }
 
+  private resetRotation(): void {
+    this.transform.rotation.x = 0;
+    this.transform.rotation.y = 0;
+    this.transform.rotation.z = 0;
+  }
+
   moveX(direction: number): void {
+    this.resetRotation();
     this.transform.position.x += direction * this.moveSpeed;
+    // Rotate to face movement direction (left/right)
+    if (direction < 0) {
+      // Moving left - rotate to face left
+      this.transform.rotation.y = -Math.PI / 2; // 90 degrees
+    } else if (direction > 0) {
+      // Moving right - rotate to face right
+      this.transform.rotation.y = Math.PI / 2; // -90 degrees
+    }
   }
 
   moveZ(direction: number): void {
+    this.resetRotation();
+
     this.transform.position.z += direction * this.moveSpeed;
+    // Rotate to face movement direction (forward/backward)
+    if (direction < 0) {
+      // Moving forward - rotate to face forward
+      this.transform.rotation.x = Math.PI; // 0 degrees
+    } else if (direction > 0) {
+      // Moving backward - rotate to face backward
+      this.transform.rotation.x = 0; // 180 degrees
+    }
   }
 
   update(deltaTime: number): void {

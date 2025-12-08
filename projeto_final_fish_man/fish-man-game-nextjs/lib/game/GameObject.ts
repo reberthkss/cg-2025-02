@@ -53,28 +53,31 @@ export abstract class GameObject {
 
   updateModelMatrix(): void {
     this.modelMatrix = m4.identity();
-
-    // Apply transformations: translate -> rotate -> scale
-    this.modelMatrix = m4.translate(
-      this.modelMatrix,
-      this.transform.position.x,
-      this.transform.position.y,
-      this.transform.position.z
-    );
-
-    this.modelMatrix = m4.xRotate(this.modelMatrix, this.transform.rotation.x);
-    this.modelMatrix = m4.yRotate(this.modelMatrix, this.transform.rotation.y);
-    this.modelMatrix = m4.zRotate(this.modelMatrix, this.transform.rotation.z);
-
+    
+    // Apply transformations: scale -> rotate -> translate
+    // This order ensures rotation happens around object's own axis
+    
+    // 1. Scale first
     this.modelMatrix = m4.scale(
       this.modelMatrix,
       this.transform.scale.x,
       this.transform.scale.y,
       this.transform.scale.z
     );
-  }
 
-  getModelMatrix(): number[] {
+    // 2. Rotate around object's local axes
+    this.modelMatrix = m4.xRotate(this.modelMatrix, this.transform.rotation.x);
+    this.modelMatrix = m4.yRotate(this.modelMatrix, this.transform.rotation.y);
+    this.modelMatrix = m4.zRotate(this.modelMatrix, this.transform.rotation.z);
+
+    // 3. Translate to world position (happens last)
+    this.modelMatrix = m4.translate(
+      this.modelMatrix,
+      this.transform.position.x,
+      this.transform.position.y,
+      this.transform.position.z
+    );
+  }  getModelMatrix(): number[] {
     return this.modelMatrix;
   }
 
