@@ -17,13 +17,16 @@ export default function FishGame() {
     gameManagerRef.current = gameManager;
 
     // Load fish model and start game
-    gameManager.loadFishModel('/nemo_fish.obj', '/nemo_fish.mtl')
+    Promise.all([
+      gameManager.loadFishModel('/nemo_fish.obj', '/nemo_fish.mtl'),
+      gameManager.loadSharkModels('/shark.obj', '/shark.mtl')
+    ])
       .then(() => {
-        console.log('Fish model loaded successfully');
+        console.log('All models loaded successfully');
         gameManager.start();
       })
       .catch((error) => {
-        console.error('Error loading fish model:', error);
+        console.error('Error loading models:', error);
       });
 
     // Cleanup on unmount

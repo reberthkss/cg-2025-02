@@ -2,6 +2,7 @@ import { ShaderProgram } from '../webgl/ShaderProgram';
 import { Camera, ProjectionType } from '../webgl/Camera';
 import { Mesh, MeshData } from '../webgl/Mesh';
 import { Fish } from '../game/Fish';
+import { Shark } from '../game/Shark';
 import { Maze } from '../game/Maze';
 import { CoordinateAxes } from '../game/CoordinateAxes';
 import { Scenario } from '../game/Scenario';
@@ -15,6 +16,7 @@ export class GameManager {
   private shader: ShaderProgram;
   private camera: Camera;
   private fish: Fish;
+  private sharks: Shark[] = [];
   private maze: Maze;
   private coordinateAxes: CoordinateAxes;
   private scenario: Scenario;
@@ -52,11 +54,15 @@ export class GameManager {
     // this.camera.setProjectionType(ProjectionType.PERSPECTIVE); // Reverted to default (Ortho)
 
     // Create game objects
-    // Create game objects
     this.fish = new Fish(this.shader);
     this.maze = new Maze(gl, this.shader);
     this.coordinateAxes = new CoordinateAxes(gl, this.shader);
     this.scenario = new Scenario(gl, this.shader);
+
+    // Create sharks at different positions
+    this.sharks.push(new Shark(this.shader, -10, -10));
+    this.sharks.push(new Shark(this.shader, 10, 10));
+    this.sharks.push(new Shark(this.shader, -15, 15));
 
     // Set fish spawn position
     const startPos = this.maze.getStartPosition();
@@ -121,7 +127,7 @@ export class GameManager {
       throw new Error('Failed to load OBJ file');
     }
 
-    console.log('OBJ loaded successfully');
+    console.log('Fish OBJ loaded successfully');
     console.log('Vertices:', objData.positions.length / 3);
     console.log('Indices:', objData.indices.length);
 
@@ -141,6 +147,41 @@ export class GameManager {
       const texture = await this.loadTexture(mtlFilePath);
       if (texture) {
         this.fish.setTexture(texture);
+      }
+    }
+  }
+
+  async loadSharkModels(objPath: string, mtlPath?: string): Promise<void> {
+    const objData = await OBJLoader.loadFromFile(objPath);
+    if (!objData) {
+      throw new Error('Failed to load Shark OBJ file');
+    }
+
+    console.log('Shark OBJ loaded successfully');
+    console.log('Vertices:', objData.positions.length / 3);
+    console.log('Indices:', objData.indices.length);
+
+    const meshData: MeshData = {
+      positions: new Float32Array(objData.positions),
+      normals: new Float32Array(objData.normals),
+      texcoords: new Float32Array(objData.texcoords),
+      indices: new Uint32Array(objData.indices)
+    };
+
+    const mesh = new Mesh(this.gl, meshData);
+
+    // Load texture if MTL exists
+    let texture: WebGLTexture | null = null;
+    if (objData.mtlFile || mtlPath) {
+      const mtlFilePath = mtlPath || '/' + objData.mtlFile;
+      texture = await this.loadTexture(mtlFilePath);
+    }
+
+    // Apply mesh and texture to all sharks
+    for (const shark of this.sharks) {
+      shark.setMesh(mesh);
+      if (texture) {
+        shark.setTexture(texture);
       }
     }
   }
@@ -242,6 +283,11 @@ export class GameManager {
 
     // Update game objects with deltaTime
     this.fish.update(deltaTime);
+
+    // Update all sharks
+    for (const shark of this.sharks) {
+      shark.update(deltaTime);
+    }
   }
 
   private render(): void {
@@ -266,6 +312,11 @@ export class GameManager {
 
     // Render maze
     this.maze.render(this.gl);
+
+    // Render all sharks
+    for (const shark of this.sharks) {
+      shark.render(this.gl);
+    }
 
     // Render fish
     this.fish.render(this.gl);
