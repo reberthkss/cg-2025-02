@@ -59,14 +59,15 @@ export class GameManager {
     this.coordinateAxes = new CoordinateAxes(gl, this.shader);
     this.scenario = new Scenario(gl, this.shader);
 
-    // Create sharks at different positions
-    this.sharks.push(new Shark(this.shader, -10, -10));
-    this.sharks.push(new Shark(this.shader, 10, 10));
-    this.sharks.push(new Shark(this.shader, -15, 15));
-
     // Set fish spawn position
     const startPos = this.maze.getStartPosition();
     this.fish.setPosition(startPos.x, startPos.y, startPos.z);
+
+    // Create sharks at random valid positions (far from start)
+    for (let i = 0; i < 3; i++) {
+      const sharkPos = this.maze.getRandomSpawnPosition(15); // At least 15 units from start
+      this.sharks.push(new Shark(this.shader, sharkPos.x, sharkPos.z));
+    }
 
     // Adjust camera to fit maze
     const mazeDims = this.maze.getDimensions();
@@ -284,9 +285,23 @@ export class GameManager {
     // Update game objects with deltaTime
     this.fish.update(deltaTime);
 
-    // Update all sharks
+    // Update all sharks with collision checking
     for (const shark of this.sharks) {
-      shark.update(deltaTime);
+      const sharkCollisionCheck = (x: number, z: number): boolean => {
+        return this.maze.checkCollision(x, z, shark.getCollisionRadius());
+      };
+      shark.update(deltaTime, sharkCollisionCheck);
+    }
+
+    // Check fish collision with sharks
+    for (const shark of this.sharks) {
+      if (shark.checkCollisionWithPoint(fishPosition.x, fishPosition.z, this.fish.getCollisionRadius())) {
+        // Collision detected! Reset fish to start position
+        const startPos = this.maze.getStartPosition();
+        this.fish.setPosition(startPos.x, startPos.y, startPos.z);
+        console.log('Fish caught by shark! Respawning...');
+        break; // Only need to reset once
+      }
     }
   }
 

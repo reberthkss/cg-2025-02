@@ -156,6 +156,44 @@ export class Maze extends GameObject {
     }
 
     /**
+     * Get a random valid spawn position in the maze
+     * @param minDistanceFromStart Minimum distance from the start position
+     */
+    getRandomSpawnPosition(minDistanceFromStart: number = 10): { x: number, y: number, z: number } {
+        const startPos = this.getStartPosition();
+        const validPositions: { x: number, y: number, z: number }[] = [];
+
+        // Collect all valid path positions
+        for (let z = 0; z < this.height; z++) {
+            for (let x = 0; x < this.width; x++) {
+                if (this.map[z][x] === 0) {
+                    const xPos = (x - this.width / 2) * this.wallSize + this.wallSize / 2;
+                    const zPos = (z - this.height / 2) * this.wallSize + this.wallSize / 2;
+                    
+                    // Calculate distance from start position
+                    const dx = xPos - startPos.x;
+                    const dz = zPos - startPos.z;
+                    const distance = Math.sqrt(dx * dx + dz * dz);
+
+                    // Only add positions that are far enough from start
+                    if (distance >= minDistanceFromStart) {
+                        validPositions.push({ x: xPos, y: 0, z: zPos });
+                    }
+                }
+            }
+        }
+
+        // Return random position from valid ones
+        if (validPositions.length > 0) {
+            const randomIndex = Math.floor(Math.random() * validPositions.length);
+            return validPositions[randomIndex];
+        }
+
+        // Fallback to start position if no valid positions found
+        return startPos;
+    }
+
+    /**
      * Check if a position collides with a wall
      * @param x World X position
      * @param z World Z position
