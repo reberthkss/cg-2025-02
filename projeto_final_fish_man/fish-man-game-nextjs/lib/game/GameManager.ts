@@ -3,6 +3,7 @@ import { Camera, ProjectionType } from '../webgl/Camera';
 import { Mesh, MeshData } from '../webgl/Mesh';
 import { Fish } from '../game/Fish';
 import { Shark } from '../game/Shark';
+import { Worm } from '../game/Worm';
 import { Maze } from '../game/Maze';
 import { CoordinateAxes } from '../game/CoordinateAxes';
 import { Scenario } from '../game/Scenario';
@@ -17,6 +18,7 @@ export class GameManager {
   private camera: Camera;
   private fish: Fish;
   private sharks: Shark[] = [];
+  private worms: Worm[] = [];
   private maze: Maze;
   private coordinateAxes: CoordinateAxes;
   private scenario: Scenario;
@@ -24,6 +26,8 @@ export class GameManager {
   private lastFrameTime: number = 0;
   private animationId: number = 0;
   private isRunning: boolean = false;
+  private score: number = 0;
+  private totalWorms: number = 10;
 
   constructor(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl');
@@ -68,6 +72,13 @@ export class GameManager {
       const sharkPos = this.maze.getRandomSpawnPosition(15); // At least 15 units from start
       this.sharks.push(new Shark(this.shader, sharkPos.x, sharkPos.z));
     }
+
+    // Create worms at random valid positions
+    for (let i = 0; i < this.totalWorms; i++) {
+      const wormPos = this.maze.getRandomSpawnPosition(5); // At least 5 units from start
+      this.worms.push(new Worm(this.gl, this.shader, wormPos.x, wormPos.z));
+    }
+    console.log(`Created ${this.worms.length} worms in the maze`);
 
     // Adjust camera to fit maze
     const mazeDims = this.maze.getDimensions();
@@ -293,6 +304,11 @@ export class GameManager {
       shark.update(deltaTime, sharkCollisionCheck);
     }
 
+    // Update all worms
+    for (const worm of this.worms) {
+      worm.update(deltaTime);
+    }
+
     // Check fish collision with sharks
     for (const shark of this.sharks) {
       if (shark.checkCollisionWithPoint(fishPosition.x, fishPosition.z, this.fish.getCollisionRadius())) {
@@ -301,6 +317,18 @@ export class GameManager {
         this.fish.setPosition(startPos.x, startPos.y, startPos.z);
         console.log('Fish caught by shark! Respawning...');
         break; // Only need to reset once
+      }
+    }
+
+    // Check fish collision with worms (collectibles)
+    for (const worm of this.worms) {
+      if (!worm.isCollected && worm.checkCollisionWithPoint(fishPosition.x, fishPosition.z, this.fish.getCollisionRadius())) {
+        worm.collect();
+        this.score++;
+        console.log(`Worm collected! Score: ${this.score}/${this.totalWorms}`);
+        if (this.score >= this.totalWorms) {
+          console.log('All worms collected! You win!');
+        }
       }
     }
   }
@@ -331,6 +359,18 @@ export class GameManager {
     // Render all sharks
     for (const shark of this.sharks) {
       shark.render(this.gl);
+    }
+
+    // Render all worms (that are not collected)
+    let wormsRendered = 0;
+    for (const worm of this.worms) {
+      if (!worm.isCollected) {
+        worm.render(this.gl);
+        wormsRendered++;
+      }
+    }
+    if (wormsRendered > 0 && Math.random() < 0.01) { // Log occasionally
+      console.log(`Rendering ${wormsRendered} worms`);
     }
 
     // Render fish
@@ -378,5 +418,13 @@ export class GameManager {
 
   getCamera(): Camera {
     return this.camera;
+  }
+
+  getScore(): number {
+    return this.score;
+  }
+
+  getTotalWorms(): number {
+    return this.totalWorms;
   }
 }
