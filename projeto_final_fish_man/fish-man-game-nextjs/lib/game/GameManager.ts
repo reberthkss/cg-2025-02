@@ -27,7 +27,7 @@ export class GameManager {
   private animationId: number = 0;
   private isRunning: boolean = false;
   private score: number = 0;
-  private totalWorms: number = 10;
+  private totalWorms: number = 50;
 
   constructor(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl');
