@@ -28,8 +28,10 @@ export class GameManager {
   private isRunning: boolean = false;
   private score: number = 0;
   private totalWorms: number = 50;
+  private basePath: string = process.env.NODE_ENV === 'production' ? '/cg-2025-02' : '';
 
   constructor(canvas: HTMLCanvasElement) {
+
     const gl = canvas.getContext('webgl');
     if (!gl) {
       throw new Error('WebGL not supported');
@@ -88,7 +90,7 @@ export class GameManager {
     this.camera.setProjectionBounds(-bound, bound, -bound, bound, -10, -200);
 
     // Load scenario textures
-    this.scenario.loadTextures('/sand_texture.png', '/water_texture.png')
+    this.scenario.loadTextures(`${this.basePath}/sand_texture.png`, `${this.basePath}/water_texture.png`)
       .then(() => console.log('Scenario textures loaded'))
       .catch(err => console.error('Failed to load scenario textures:', err));
 
@@ -134,7 +136,7 @@ export class GameManager {
   }
 
   async loadFishModel(objPath: string, mtlPath?: string): Promise<void> {
-    const objData = await OBJLoader.loadFromFile(objPath);
+    const objData = await OBJLoader.loadFromFile(this.basePath+objPath);
     if (!objData) {
       throw new Error('Failed to load OBJ file');
     }
@@ -155,7 +157,7 @@ export class GameManager {
 
     // Load texture if MTL exists
     if (objData.mtlFile || mtlPath) {
-      const mtlFilePath = mtlPath || '/' + objData.mtlFile;
+      const mtlFilePath = mtlPath || `${this.basePath}/` + objData.mtlFile;
       const texture = await this.loadTexture(mtlFilePath);
       if (texture) {
         this.fish.setTexture(texture);
@@ -164,7 +166,7 @@ export class GameManager {
   }
 
   async loadSharkModels(objPath: string, mtlPath?: string): Promise<void> {
-    const objData = await OBJLoader.loadFromFile(objPath);
+    const objData = await OBJLoader.loadFromFile(this.basePath+objPath);
     if (!objData) {
       throw new Error('Failed to load Shark OBJ file');
     }
@@ -185,7 +187,7 @@ export class GameManager {
     // Load texture if MTL exists
     let texture: WebGLTexture | null = null;
     if (objData.mtlFile || mtlPath) {
-      const mtlFilePath = mtlPath || '/' + objData.mtlFile;
+      const mtlFilePath = mtlPath || `${this.basePath}/` + objData.mtlFile;
       texture = await this.loadTexture(mtlFilePath);
     }
 
