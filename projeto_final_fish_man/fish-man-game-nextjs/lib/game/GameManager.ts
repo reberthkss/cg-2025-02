@@ -32,6 +32,8 @@ export class GameManager {
 
   constructor(canvas: HTMLCanvasElement) {
 
+    console.log("BASE PATH => ", this.basePath)
+
     const gl = canvas.getContext('webgl');
     if (!gl) {
       throw new Error('WebGL not supported');
