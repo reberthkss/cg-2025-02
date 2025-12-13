@@ -29,10 +29,9 @@ export default function FishGame() {
     const scoreAnimationId = requestAnimationFrame(updateScore);
 
     // Load fish and shark models, worms use simple sprites
-    const basePath = process.env.NODE_ENV === 'production' ? '/cg-2025-02' : '';
     Promise.all([
-      gameManager.loadFishModel(`${basePath}/nemo_fish.obj`, `${basePath}/nemo_fish.mtl`),
-      gameManager.loadSharkModels(`${basePath}/shark.obj`, `${basePath}/shark.mtl`)
+      gameManager.loadFishModel(`/nemo_fish.obj`, `/nemo_fish.mtl`),
+      gameManager.loadSharkModels(`/shark.obj`, `/shark.mtl`)
     ])
       .then(() => {
         console.log('All models loaded successfully');
