@@ -160,6 +160,8 @@ export class GameManager {
     // Load texture if MTL exists
     if (objData.mtlFile || mtlPath) {
       const mtlFilePath = mtlPath || `${this.basePath}/` + objData.mtlFile;
+      console.log("MTL FILE => ", objData.mtlFile)
+      console.log("MTIL FILE PATH => ", mtlFilePath)
       const texture = await this.loadTexture(mtlFilePath);
       if (texture) {
         this.fish.setTexture(texture);
