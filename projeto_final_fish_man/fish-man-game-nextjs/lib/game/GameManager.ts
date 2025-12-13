@@ -34,8 +34,6 @@ export class GameManager {
 
   constructor(canvas: HTMLCanvasElement) {
 
-    console.log("BASE PATH => ", this.basePath)
-
     const gl = canvas.getContext('webgl');
     if (!gl) {
       throw new Error('WebGL not supported');
@@ -162,8 +160,6 @@ export class GameManager {
     // Load texture if MTL exists
     if (objData.mtlFile || mtlPath) {
       const mtlFilePath = this.basePath+mtlPath || `${this.basePath}/` + objData.mtlFile;
-      console.log("MTL FILE => ", objData.mtlFile)
-      console.log("MTIL FILE PATH => ", mtlFilePath)
       const texture = await this.loadTexture(mtlFilePath);
       if (texture) {
         this.fish.setTexture(texture);
@@ -193,7 +189,7 @@ export class GameManager {
     // Load texture if MTL exists
     let texture: WebGLTexture | null = null;
     if (objData.mtlFile || mtlPath) {
-      const mtlFilePath = mtlPath || `${this.basePath}/` + objData.mtlFile;
+      const mtlFilePath = this.basePath+mtlPath || `${this.basePath}/` + objData.mtlFile;
       texture = await this.loadTexture(mtlFilePath);
     }
 
