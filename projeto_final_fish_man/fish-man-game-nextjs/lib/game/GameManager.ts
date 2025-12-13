@@ -256,7 +256,7 @@ export class GameManager {
           resolve(null);
         };
 
-        image.src = '/' + firstMaterial.textureMap;
+        image.src = `${this.basePath}/` + firstMaterial.textureMap;
       });
     }
     return null;
