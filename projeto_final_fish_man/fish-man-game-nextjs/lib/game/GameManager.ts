@@ -28,7 +28,9 @@ export class GameManager {
   private isRunning: boolean = false;
   private score: number = 0;
   private totalWorms: number = 50;
-  private basePath: string = process.env.NODE_ENV === 'production' ? '/cg-2025-02' : '';
+  private get basePath(): string {
+    return process.env.NODE_ENV === 'production' ? '/cg-2025-02' : '';
+  }
 
   constructor(canvas: HTMLCanvasElement) {
 
