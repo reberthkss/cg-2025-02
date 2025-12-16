@@ -57,9 +57,6 @@ export class Scenario extends GameObject {
                 this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat,
                     srcFormat, srcType, image);
 
-                // WebGL1 has different requirements for power of 2 images
-                // vs non power of 2 images so check if the image is a
-                // power of 2 in both dimensions.
                 if (this.isPowerOf2(image.width) && this.isPowerOf2(image.height)) {
                     // Yes, it's a power of 2. Generate mips.
                     this.gl.generateMipmap(this.gl.TEXTURE_2D);
@@ -112,12 +109,6 @@ export class Scenario extends GameObject {
 
         this.floorMesh.draw();
 
-        // --- Render Water Background (Skybox-ish) ---
-        // We render the inside of a large cube.
-        // Disable depth write so background is always behind? 
-        // Or just make it huge. Let's make it huge and render first (or last with depth test).
-        // Actually, for a simple "water" effect, a large cube around the scene works.
-
         if (this.waterTexture) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.waterTexture);
         }
@@ -131,10 +122,6 @@ export class Scenario extends GameObject {
         inverseTranspose = m4.transpose(m4.inverse(modelMatrix));
         this.shader.setUniformMatrix4fv('u_inverseTransposeModelMatrix', inverseTranspose);
 
-        // We need to see the INSIDE of the cube. 
-        // Standard culling culls back faces (inside). 
-        // We can flip cull face or just scale by -1?
-        // Let's just disable culling for the water mesh for now.
         gl.disable(gl.CULL_FACE);
         this.waterMesh.draw();
         gl.enable(gl.CULL_FACE);

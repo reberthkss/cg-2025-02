@@ -294,9 +294,6 @@ export class GameManager {
 
     const fishPosition = this.fish.getPosition();
 
-    // Aim camera at fish - REMOVED for static view
-    // this.camera.setTarget(fishPosition.x, fishPosition.y, fishPosition.z);
-
     // Update game objects with deltaTime
     this.fish.update(deltaTime);
 
@@ -316,7 +313,6 @@ export class GameManager {
     // Check fish collision with sharks
     for (const shark of this.sharks) {
       if (shark.checkCollisionWithPoint(fishPosition.x, fishPosition.z, this.fish.getCollisionRadius())) {
-        // Collision detected! Reset fish to start position
         const startPos = this.maze.getStartPosition();
         this.fish.setPosition(startPos.x, startPos.y, startPos.z);
         console.log('Fish caught by shark! Respawning...');
