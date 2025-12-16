@@ -87,7 +87,7 @@ export class Shark extends GameObject {
     const angle = Math.atan2(this.direction.x, this.direction.z);
     this.transform.rotation.y = angle;
 
-    // Gentle body sway animation
+    // body animation
     const bodySway = Math.sin(this.time * 3.0) * this.bodySwayAmplitude;
     const swayRad = (bodySway * Math.PI) / 180;
 
